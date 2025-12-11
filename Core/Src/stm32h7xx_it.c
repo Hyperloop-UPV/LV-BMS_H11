@@ -20,6 +20,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32h7xx_it.h"
+#include "HALAL/Benchmarking_toolkit/HardfaultTrace.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
@@ -89,10 +90,162 @@ extern FDCAN_HandleTypeDef hfdcan1;
 /**
   * @brief This function handles Non maskable interrupt.
   */
+
+
+#define HARDFAULT_HANDLING_ASM(_x)               \
+  __asm volatile(                                \
+      "tst lr, #4 \n"                            \
+      "ite eq \n"                                \
+      "mrseq r0, msp \n"                         \
+      "mrsne r0, psp \n"                         \
+      "b my_fault_handler_c \n"                  \
+    )
+//calls my_fault_handler with the pointer frame that was being used MSP(Main stack pointer) PSP(process stack pointer)
+
+ //create the space for the hardfault section in the flash
+__attribute__((section(".hardfault_log")))
+volatile uint32_t hard_fault[128];
+
+static void flash_unlock(void){
+    if((FLASH->CR1 & FLASH_CR_LOCK) != 0){
+        FLASH->KEYR1 = FLASH_KEY1;
+        FLASH->KEYR1 = FLASH_KEY2;
+    }
+}
+static void flash_lock(void){
+    FLASH->CR1 |= FLASH_CR_LOCK;
+}
+static void flash_wait(void){
+    while(FLASH->SR1 & FLASH_SR_QW){}
+}
+static void flash_write_32bytes(uint32_t address,const uint8_t* data){
+  if(address & 0X3U){
+    return; // the address direction must be aligned 4;
+  }
+  flash_wait();
+  flash_unlock();
+  FLASH->CR1 |= FLASH_CR_PG; //Enable writing
+  for(volatile size_t i = 0; i < 8; i++){
+    *(volatile uint32_t*)(address + i*4) = ((uint32_t*)data)[i];
+  }
+  flash_wait();
+  //Disable writing 
+  FLASH->CR1 &= ~FLASH_CR_PG;
+  flash_lock();
+}
+static void flash_write_blockwise(uint32_t address, const uint8_t *data,size_t blocks){
+    for(volatile size_t i = 0; i < blocks;i++){
+      flash_write_32bytes(address + i*32,data + i*32);
+    }
+}
+// //erase hard_fault sector 6
+static void flash_erase_hard_fault_sector(void){
+    flash_wait();
+    FLASH->CCR1 = 0xFFFFFFFFu;
+    flash_unlock();
+    
+    FLASH->CR1 |= FLASH_CR_SER | (FLASH_SECTOR_6 << FLASH_CR_SNB_Pos);
+  //start erase
+    FLASH->CR1 |= FLASH_CR_START;
+    flash_wait();
+    FLASH->CCR1 = 0xFFFFFFFFU;
+  // Clean flag
+    FLASH->CR1 &= ~FLASH_CR_SER;
+    flash_lock();
+}
+//check if we have already write.
+static int hardfault_flag_is_set(void){
+  return (*(volatile uint32_t *)HF_FLASH_ADDR) == HF_FLAG_VALUE;
+}
+
+#define HALT_IF_DEBUGGING()                               \
+  do {                                                    \
+    if ((*(volatile uint32_t *)0xE000EDF0) & (1 << 0)) {  \
+      __asm("bkpt 1");                                    \
+    }                                                     \
+  } while (0)    
+  //Breakpoint in debug mode                                         
+
+
+volatile uint32_t real_fault_pc;
+__attribute__((noreturn,optimize("O0")))
+void my_fault_handler_c(sContextStateFrame *frame) {
+  // If and only if a debugger is attached, execute a breakpoint
+  // instruction so we can take a look at what triggered the fault
+  const uint32_t instr_pc = frame->return_address;
+  real_fault_pc = instr_pc & ~1; //clean bit 0, real direction
+  volatile HardFaultLog log_hard_fault;
+  volatile uint32_t *cfsr = (volatile uint32_t *)0xE000ED28;
+  //keep the log in the estructure
+  log_hard_fault.HF_flag = HF_FLAG_VALUE;
+  log_hard_fault.frame = *frame;
+  log_hard_fault.CfsrDecode.cfsr = *cfsr;
+  log_hard_fault.fault_address.Nothing_Valid = 0;
+
+  const uint8_t memory_fault = *cfsr & 0x000000ff;
+  if(memory_fault){
+    const uint8_t MMARVALID = memory_fault & 0b10000000; // We can find the exact place were occured the memory fault
+    const uint8_t MLSPERR = memory_fault & 0b00100000; // MemManage fault FPU stack
+    const uint8_t MSTKERR = memory_fault & 0b00010000; // Stack overflow while entring an exception
+    const uint8_t MUNSTKERR = memory_fault & 0b00001000;  // Stack error while exiting from an exception (Corrupted stack)
+    const uint8_t DACCVIOL = memory_fault & 0b00000010; //Data access violation (acceded to pointer NULL, to a protected memory region, overflow in arrays ...)
+    const uint8_t IACCVIOL = memory_fault & 0b00000001; //Instruction access violation
+    if(MMARVALID){
+      uint32_t memory_fault_address = *(volatile uint32_t *)0xE000ED34;
+      log_hard_fault.fault_address.MMAR_VALID = memory_fault_address;
+    }
+    HALT_IF_DEBUGGING();
+  }
+  const uint8_t bus_fault = (*cfsr & 0x0000ff00) >> 8;
+  if(bus_fault){
+    const uint8_t BFARVALID = bus_fault & 0b10000000; // BFAR is valid we can know the address which triggered the fault
+    const uint8_t LSPERR = bus_fault & 0b00100000; //Fault stack FPU
+    const uint8_t STKERR = bus_fault & 0b00010000;  // Fault stack while entring an exception
+    const uint8_t UNSTKERR = bus_fault & 0b00001000;  // Stack error while exiting an exception
+    const uint8_t IMPRECISERR = bus_fault & 0b00000010; // Bus fault, but the instruction that caused the error can be uncertain
+    const uint8_t PRECISERR = bus_fault & 0b00000001; //You can read Bfar to find the eact direction of the instruction
+    if(BFARVALID){
+      volatile uint32_t bus_fault_address = *(volatile uint32_t *)0xE000ED38;
+      log_hard_fault.fault_address.BFAR_VALID = bus_fault_address;
+      //Don't trust in case IMPRECISERR == 1;
+    }
+    HALT_IF_DEBUGGING();
+  }
+  const uint16_t usage_fault = (*cfsr & 0xffff0000) >> 16;
+  if(usage_fault){
+    const uint16_t DIVBYZERO = usage_fault & 0x0200; // Div by ZERO hardfault;
+    const uint16_t UNALIGNED = usage_fault & 0x0100; // Unaligned access operation occured
+    const uint16_t NOCP = usage_fault & 0x0008; //Access to FPU when is not present
+    const uint16_t INVPC = usage_fault & 0x0004; //Invalid program counter load
+    const uint16_t INVSTATE = usage_fault & 0x0002; // Invalid processor state
+    const uint16_t UNDEFINSTR = usage_fault & 0x0001; //Undefined instruction.
+    //HALT_IF_DEBUGGING(); 
+  }
+  volatile uint8_t metadata_buffer[0x100];
+  memcpy(metadata_buffer,(void*)METADATA_FLASH_ADDR,0x100);
+  flash_erase_hard_fault_sector();
+  //write log hard fault
+  flash_write_blockwise(HF_FLASH_ADDR,(uint8_t*)&log_hard_fault,(sizeof(log_hard_fault) + 31)/32);
+  //write log Metadata_flash_addr
+  flash_write_blockwise(METADATA_FLASH_ADDR,metadata_buffer,(0x100)/32);
+  //reboot the system
+  volatile uint32_t *aircr = (volatile uint32_t *)0xE000ED0C;
+  __asm volatile ("dsb");
+  *aircr = (0x05FA << 16) | 0x1 << 2;
+  __asm volatile ("dsb");
+  while (1) {} // should be unreachable
+  }
+
+__attribute__((naked))
+void HardFault_Handler(void)
+{
+  HARDFAULT_HANDLING_ASM();
+  while (1){}
+}
+
 void NMI_Handler(void)
 {
   /* USER CODE BEGIN NonMaskableInt_IRQn 0 */
-
   /* USER CODE END NonMaskableInt_IRQn 0 */
   /* USER CODE BEGIN NonMaskableInt_IRQn 1 */
   while (1)
@@ -100,22 +253,6 @@ void NMI_Handler(void)
   }
   /* USER CODE END NonMaskableInt_IRQn 1 */
 }
-
-/**
-  * @brief This function handles Hard fault interrupt.
-  */
-void HardFault_Handler(void)
-{
-  /* USER CODE BEGIN HardFault_IRQn 0 */
-
-  /* USER CODE END HardFault_IRQn 0 */
-  while (1)
-  {
-    /* USER CODE BEGIN W1_HardFault_IRQn 0 */
-    /* USER CODE END W1_HardFault_IRQn 0 */
-  }
-}
-
 /**
   * @brief This function handles Memory management fault.
   */

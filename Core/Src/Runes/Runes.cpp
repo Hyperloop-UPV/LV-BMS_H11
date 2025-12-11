@@ -314,3 +314,14 @@ MultiplierAccelerator::FMACInstance MultiplierAccelerator::Instance = {
     .dma_write = DMA::Stream::DMA2Stream2,
 };
 #endif
+
+/************************************************
+ *					   HARD_FAULT
+ ***********************************************/
+extern "C"{
+GPIO_TypeDef* ports_hard_fault[] = {GPIOB,GPIOB,GPIOE};
+uint16_t pins_hard_fault[] = {GPIO_PIN_0,GPIO_PIN_14,GPIO_PIN_1};
+// //don't touch the count
+uint8_t hard_fault_leds_count = (sizeof(ports_hard_fault)/sizeof(GPIO_TypeDef*) == sizeof(pins_hard_fault)/sizeof(uint16_t)) 
+                                    ? sizeof(pins_hard_fault)/sizeof(uint16_t) : 0;
+}

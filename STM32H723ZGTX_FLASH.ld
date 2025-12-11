@@ -141,6 +141,14 @@ SECTIONS
     the sections below it would try to be placed afterwards
     thus overflowing the FLASH
   */
+   /*
+    This is a space to save all the related information about the hardfault
+  */
+  .hardfault_log 0x080C0000 :
+  {
+    KEEP(*(.hardfault_log))
+    . = . + 0x200;
+  } >FLASH
   .metadata_pool :
   {
   	. = ABSOLUTE(0x080DFD00);
