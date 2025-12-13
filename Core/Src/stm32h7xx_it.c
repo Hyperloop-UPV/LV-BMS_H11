@@ -91,16 +91,13 @@ extern FDCAN_HandleTypeDef hfdcan1;
   * @brief This function handles Non maskable interrupt.
   */
 
-
+//calls my_fault_handler with the MSP(main stack pointer)
 #define HARDFAULT_HANDLING_ASM(_x)               \
   __asm volatile(                                \
-      "tst lr, #4 \n"                            \
-      "ite eq \n"                                \
       "mrseq r0, msp \n"                         \
-      "mrsne r0, psp \n"                         \
       "b my_fault_handler_c \n"                  \
     )
-//calls my_fault_handler with the pointer frame that was being used MSP(Main stack pointer) PSP(process stack pointer)
+
 
  //create the space for the hardfault section in the flash
 __attribute__((section(".hardfault_log")))
