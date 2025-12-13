@@ -155,13 +155,6 @@ static int hardfault_flag_is_set(void){
   return (*(volatile uint32_t *)HF_FLASH_ADDR) == HF_FLAG_VALUE;
 }
 
-#define HALT_IF_DEBUGGING()                               \
-  do {                                                    \
-    if ((*(volatile uint32_t *)0xE000EDF0) & (1 << 0)) {  \
-      __asm("bkpt 1");                                    \
-    }                                                     \
-  } while (0)    
-  //Breakpoint in debug mode                                         
 
 __attribute__((noreturn,optimize("O0")))
 void my_fault_handler_c(sContextStateFrame *frame) {
@@ -187,7 +180,6 @@ void my_fault_handler_c(sContextStateFrame *frame) {
       uint32_t memory_fault_address = *(volatile uint32_t *)0xE000ED34;
       log_hard_fault.fault_address.MMAR_VALID = memory_fault_address;
     }
-    HALT_IF_DEBUGGING();
   }
   const uint8_t bus_fault = (*cfsr & 0x0000ff00) >> 8;
   if(bus_fault){
@@ -202,7 +194,6 @@ void my_fault_handler_c(sContextStateFrame *frame) {
       log_hard_fault.fault_address.BFAR_VALID = bus_fault_address;
       //Don't trust in case IMPRECISERR == 1;
     }
-    HALT_IF_DEBUGGING();
   }
   const uint16_t usage_fault = (*cfsr & 0xffff0000) >> 16;
   if(usage_fault){
@@ -212,7 +203,6 @@ void my_fault_handler_c(sContextStateFrame *frame) {
     const uint16_t INVPC = usage_fault & 0x0004; //Invalid program counter load
     const uint16_t INVSTATE = usage_fault & 0x0002; // Invalid processor state
     const uint16_t UNDEFINSTR = usage_fault & 0x0001; //Undefined instruction.
-    HALT_IF_DEBUGGING(); 
   }
   volatile uint8_t metadata_buffer[0x100];
   memcpy(metadata_buffer,(void*)METADATA_FLASH_ADDR,0x100);
@@ -222,10 +212,10 @@ void my_fault_handler_c(sContextStateFrame *frame) {
   //write log Metadata_flash_addr
   flash_write_blockwise(METADATA_FLASH_ADDR,metadata_buffer,(0x100)/32);
   //reboot the system
-  // volatile uint32_t *aircr = (volatile uint32_t *)0xE000ED0C;
-  // __asm volatile ("dsb");
-  // *aircr = (0x05FA << 16) | 0x1 << 2;
-  // __asm volatile ("dsb");
+  volatile uint32_t *aircr = (volatile uint32_t *)0xE000ED0C;
+  __asm volatile ("dsb");
+  *aircr = (0x05FA << 16) | 0x1 << 2;
+  __asm volatile ("dsb");
   while (1) {} // should be unreachable
   }
 
