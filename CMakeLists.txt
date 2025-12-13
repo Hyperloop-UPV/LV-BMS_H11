@@ -54,7 +54,7 @@ target_compile_options(${EXECUTABLE} PRIVATE
   $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-mfloat-abi=hard>
   $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-mthumb>
   $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-specs=nosys.specs>
-
+  -g
   -ffunction-sections
   -fdata-sections
   -fno-exceptions
