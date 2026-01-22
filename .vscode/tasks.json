@@ -11,7 +11,10 @@
       {
         "label": "Pre-flash check",
         "type": "shell",
-        "command": "${workspaceFolder}/virtual/Scripts/python",
+        "command": "${workspaceFolder}/virtual/bin/python",
+        "windows": {
+          "command": "${workspaceFolder}/virtual/Scripts/python"
+        },
         "args": [
           "${workspaceFolder}/tools/preflash_check.py"
         ],
