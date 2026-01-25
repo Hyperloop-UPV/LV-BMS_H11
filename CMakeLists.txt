@@ -3,15 +3,51 @@ cmake_minimum_required(VERSION 3.14)
 project(template-project LANGUAGES ASM C CXX)
 
 set(EXECUTABLE ${PROJECT_NAME}.elf)
-set(STLIB_DIR  ${CMAKE_CURRENT_LIST_DIR}/deps/ST-LIB)
+set(Board "VCU") # User must change the Board name
+set(STLIB_DIR ${CMAKE_CURRENT_LIST_DIR}/deps/ST-LIB)
 set(LD_SCRIPT  ${STLIB_DIR}/STM32H723ZGTX_FLASH.ld)
+
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+
+set(GENERATOR_SCRIPT "${CMAKE_SOURCE_DIR}/Core/Inc/Code_generation/Generator.py")
+
+add_custom_target(run_generator ALL
+    COMMAND ${Python3_EXECUTABLE} ${GENERATOR_SCRIPT} ${Board}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
 if(CMAKE_HOST_WIN32 )
   set(VENV_PYTHON ${CMAKE_SOURCE_DIR}/virtual/Scripts/python)
 else()
   set(VENV_PYTHON ${CMAKE_SOURCE_DIR}/virtual/bin/python)
 endif()
-option(USE_ETHERNET  "Enable ethernet peripheral"                 OFF)
-option(TARGET_NUCLEO "Targets the STM32H723 Nucleo dev board"     OFF)
+
+add_custom_target(
+    my_custom_target_that_always_runs ALL
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/_tmp.h
+)
+add_custom_command(
+    OUTPUT
+        ${CMAKE_CURRENT_BINARY_DIR}/_tmp.h  # fake! ensure we run! 
+    COMMAND ${VENV_PYTHON} ${CMAKE_SOURCE_DIR}/tools/generate_binary_metadata.py
+)
+
+option(USE_ETHERNET "Enable ethernet peripheral" OFF)
+option(TARGET_NUCLEO "Targets the STM32H723 Nucleo development board" OFF)
+
+if (PROJECT_IS_TOP_LEVEL AND (NOT CMAKE_CROSSCOMPILING))
+  include(FetchContent)
+  option(BUILD_GMOCK OFF)
+  option(INSTALL_GTEST OFF)
+  FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG        v1.15.2
+  )
+  FetchContent_MakeAvailable(googletest)
+  add_library(GTest::GTest INTERFACE IMPORTED)
+  target_link_libraries(GTest::GTest INTERFACE gtest_main)
+endif()
 
 message(STATUS "Template project: CMAKE_CROSSCOMPILING = ${CMAKE_CROSSCOMPILING}")
 message(STATUS "Template project: USE_ETHERNET         = ${USE_ETHERNET}")
@@ -129,3 +165,6 @@ else()
     COMMENT "Removing BOARD build marker (NUCLEO build)"
   )
 endif()
+
+
+
