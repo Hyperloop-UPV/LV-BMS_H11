@@ -1,34 +1,23 @@
-#define EXAMPLE_BASE
-#define TEST_0 // Test to be run
-
-// Include all examples, run the one defined above
 #include "Examples/ExampleMPU.cpp"
-
-#ifdef EXAMPLE_BASE
+#include "Examples/ExamplesHardFault.cpp"
 
 #include "main.h"
 #include "ST-LIB.hpp"
 
-int main(void) {
-#ifdef SIM_ON
-    SharedMemory::start();
-#endif
-    Hard_fault_check();
-    DigitalOutput led_on(PB0);
-    STLIB::start();
+int main(void) { 
+  Hard_fault_check();
+  STLIB::start();
 
-    Time::register_low_precision_alarm(100, [&]() { led_on.toggle(); 
-    });
+  using myBoard = ST_LIB::Board<>;
+  myBoard::init();
 
-    while (1) {
-        STLIB::update();
-    }
+  while (1) {
+    STLIB::update();
+  }
 }
-
 void Error_Handler(void) {
     ErrorHandler("HAL error handler triggered");
     while (1) {
     }
 }
 
-#endif
