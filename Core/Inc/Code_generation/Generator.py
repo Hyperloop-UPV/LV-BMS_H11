@@ -8,12 +8,7 @@ if len(sys.argv)<2:
     
 JSONpath = "Core/Inc/Code_generation/JSON_ADE"
 aux = sys.argv[1]
-filtered = ""
-for char in aux:
-    if char.isalpha():
-        filtered += char
-    else:
-        break
+filtered = aux
 board = filtered
 
 
