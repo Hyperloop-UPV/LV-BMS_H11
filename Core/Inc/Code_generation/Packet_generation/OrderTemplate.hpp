@@ -23,13 +23,13 @@ public:
     OrderPackets() = default;
 
     {% for packet in packets -%}
-    inline static HeapOrder *{{packet.name}}{nullptr};
+    inline static HeapOrder *{{packet.name}}_order{nullptr};
     {% endfor %}
     
     {% for packet in packets -%}
     static void {{packet.name}}_init({% for variable in packet.variables %}{{variable.type}} &{{variable.name}}{% if not loop.last %}, {% endif %}{% endfor %})
     {
-        {{packet.name}} = new HeapOrder({{packet.id}}, &{{packet.name}}_cb{% if packet.variables %}, {% for variable in packet.variables %}&{{variable.name}}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %});
+        {{packet.name}}_order = new HeapOrder({{packet.id}}, &{{packet.name}}_cb{% if packet.variables %}, {% for variable in packet.variables %}&{{variable.name}}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %});
     }
     {% endfor %}
 

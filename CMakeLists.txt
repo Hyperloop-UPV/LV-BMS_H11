@@ -66,7 +66,6 @@ file(GLOB_RECURSE GENERATOR_JSONS
 
 set(GENERATED_DATA_PACKETS ${CMAKE_SOURCE_DIR}/Core/Inc/Communications/Packets/DataPackets.hpp)
 set(GENERATED_ORDER_PACKETS ${CMAKE_SOURCE_DIR}/Core/Inc/Communications/Packets/OrderPackets.hpp)
-set(GENERATED_STATE_MACHINE ${CMAKE_SOURCE_DIR}/Core/Inc/state_machine.hpp)
 add_custom_command(
   OUTPUT
   ${GENERATED_DATA_PACKETS}
@@ -79,18 +78,14 @@ add_custom_command(
   ${CMAKE_SOURCE_DIR}/Core/Inc/Code_generation/Packet_generation/Packet_generation.py
   ${CMAKE_SOURCE_DIR}/Core/Inc/Code_generation/Packet_generation/DataTemplate.hpp
   ${CMAKE_SOURCE_DIR}/Core/Inc/Code_generation/Packet_generation/OrderTemplate.hpp
-  ${CMAKE_SOURCE_DIR}/Core/Inc/Code_generation/State_machine_generation/State_machine_generation.py
-  ${CMAKE_SOURCE_DIR}/Core/Inc/Code_generation/State_machine_generation/State_machine_description.py
-  ${CMAKE_SOURCE_DIR}/state_machine.json
   ${GENERATOR_JSONS}
-  COMMENT "Generating packets and state machine"
+  COMMENT "Generating packets for ${Board}"
 )
 
 add_custom_target(run_generator ALL
   DEPENDS
   ${GENERATED_DATA_PACKETS}
   ${GENERATED_ORDER_PACKETS}
-  ${GENERATED_STATE_MACHINE}
 )
 
 file(GLOB_RECURSE METADATA_SOURCES
