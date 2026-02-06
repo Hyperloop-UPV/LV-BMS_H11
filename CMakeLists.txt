@@ -1,0 +1,170 @@
+cmake_minimum_required(VERSION 3.14)
+
+project(template-project LANGUAGES ASM C CXX)
+
+set(EXECUTABLE ${PROJECT_NAME}.elf)
+set(Board "VCU") # User must change the Board name
+set(STLIB_DIR ${CMAKE_CURRENT_LIST_DIR}/deps/ST-LIB)
+set(LD_SCRIPT  ${STLIB_DIR}/STM32H723ZGTX_FLASH.ld)
+
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+
+set(GENERATOR_SCRIPT "${CMAKE_SOURCE_DIR}/Core/Inc/Code_generation/Generator.py")
+
+add_custom_target(run_generator ALL
+    COMMAND ${Python3_EXECUTABLE} ${GENERATOR_SCRIPT} ${Board}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+if(CMAKE_HOST_WIN32 )
+  set(VENV_PYTHON ${CMAKE_SOURCE_DIR}/virtual/Scripts/python)
+else()
+  set(VENV_PYTHON ${CMAKE_SOURCE_DIR}/virtual/bin/python)
+endif()
+
+add_custom_target(
+    my_custom_target_that_always_runs ALL
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/_tmp.h
+)
+add_custom_command(
+    OUTPUT
+        ${CMAKE_CURRENT_BINARY_DIR}/_tmp.h  # fake! ensure we run! 
+    COMMAND ${VENV_PYTHON} ${CMAKE_SOURCE_DIR}/tools/generate_binary_metadata.py
+)
+
+option(USE_ETHERNET "Enable ethernet peripheral" OFF)
+option(TARGET_NUCLEO "Targets the STM32H723 Nucleo development board" OFF)
+
+if (PROJECT_IS_TOP_LEVEL AND (NOT CMAKE_CROSSCOMPILING))
+  include(FetchContent)
+  option(BUILD_GMOCK OFF)
+  option(INSTALL_GTEST OFF)
+  FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG        v1.15.2
+  )
+  FetchContent_MakeAvailable(googletest)
+  add_library(GTest::GTest INTERFACE IMPORTED)
+  target_link_libraries(GTest::GTest INTERFACE gtest_main)
+endif()
+
+message(STATUS "Template project: CMAKE_CROSSCOMPILING = ${CMAKE_CROSSCOMPILING}")
+message(STATUS "Template project: USE_ETHERNET         = ${USE_ETHERNET}")
+message(STATUS "Template project: TARGET_NUCLEO        = ${TARGET_NUCLEO}")
+
+add_subdirectory(${STLIB_DIR})
+message(STATUS "Using ST-LIB target: ${STLIB_LIBRARY}")
+
+file(GLOB_RECURSE SOURCE_C    ${CMAKE_SOURCE_DIR}/Core/*.c)
+file(GLOB_RECURSE SOURCE_CPP  ${CMAKE_SOURCE_DIR}/Core/*.cpp)
+file(GLOB_RECURSE SOURCE_H    ${CMAKE_SOURCE_DIR}/Core/*.h)
+file(GLOB_RECURSE SOURCE_HPP  ${CMAKE_SOURCE_DIR}/Core/*.hpp)
+
+add_executable(${EXECUTABLE}
+  ${SOURCE_C}
+  ${SOURCE_CPP}
+  ${SOURCE_H}
+  ${SOURCE_HPP}
+
+  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:${STLIB_DIR}/startup_stm32h723zgtx.s>
+)
+
+target_link_libraries(${EXECUTABLE} PRIVATE
+  ${STLIB_LIBRARY}
+)
+
+set_target_properties(${EXECUTABLE} PROPERTIES
+  CXX_STANDARD 23
+  CXX_STANDARD_REQUIRED YES
+  C_STANDARD 17
+  C_STANDARD_REQUIRED YES
+)
+
+target_compile_definitions(${EXECUTABLE} PRIVATE
+  $<$<BOOL:${USE_ETHERNET}>:STLIB_ETH>
+  $<IF:$<BOOL:${TARGET_NUCLEO}>,NUCLEO,BOARD>
+  $<IF:$<BOOL:${TARGET_NUCLEO}>,HSE_VALUE=8000000,HSE_VALUE=25000000>
+)
+
+target_compile_options(${EXECUTABLE} PRIVATE
+  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-mcpu=cortex-m7>
+  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-mfpu=fpv5-d16>
+  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-mfloat-abi=hard>
+  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-mthumb>
+  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-specs=nosys.specs>
+  -g
+  -ffunction-sections
+  -fdata-sections
+  -fno-exceptions
+
+  -Wno-psabi
+
+  $<$<COMPILE_LANGUAGE:C>:-w>
+
+  $<$<COMPILE_LANGUAGE:CXX>:-Wall>
+  # $<$<COMPILE_LANGUAGE:CXX>:-Wpedantic>
+  $<$<COMPILE_LANGUAGE:CXX>:-Werror>
+  $<$<COMPILE_LANGUAGE:CXX>:-fno-use-cxa-atexit>
+  $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
+)
+
+target_include_directories(${EXECUTABLE} PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/Core/Inc
+)
+
+target_link_options(${EXECUTABLE} PRIVATE 
+  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-T${LD_SCRIPT}>
+  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-mcpu=cortex-m7>
+  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-mthumb>
+  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-mfpu=fpv5-d16>
+  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-mfloat-abi=hard>
+  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-specs=nosys.specs>
+  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-lc>
+  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-lm>
+  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-lnosys>
+  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-Wl,-Map=${PROJECT_NAME}.map,--cref>
+  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-Wl,--gc-sections>
+)
+
+add_custom_target(generate_binary_metadata ALL
+  COMMAND ${VENV_PYTHON} ${CMAKE_SOURCE_DIR}/tools/generate_binary_metadata.py
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  COMMENT "Generating binary metadata"
+)
+
+add_dependencies(${EXECUTABLE} generate_binary_metadata)
+if (PROJECT_IS_TOP_LEVEL)
+  execute_process(
+    COMMAND ${CMAKE_COMMAND} -E create_symlink
+      ${CMAKE_BINARY_DIR}/compile_commands.json
+      ${CMAKE_CURRENT_SOURCE_DIR}/compile_commands.json
+  )
+endif()
+# Post-build: Copy binary to out/build/latest.elf and create marker for BOARD builds
+add_custom_command(TARGET ${EXECUTABLE} POST_BUILD
+  # Create output directory
+  COMMAND ${CMAKE_COMMAND} -E make_directory
+          ${CMAKE_SOURCE_DIR}/out/build
+  # Copy the built binary to out/build/latest.elf
+  COMMAND ${CMAKE_COMMAND} -E copy
+          $<TARGET_FILE:${EXECUTABLE}>
+          ${CMAKE_SOURCE_DIR}/out/build/latest.elf
+  COMMENT "Copying ${EXECUTABLE} to out/build/latest.elf"
+)
+
+# Create or remove marker file for BOARD builds (used by preflash_check.py)
+if(NOT TARGET_NUCLEO)
+  add_custom_command(TARGET ${EXECUTABLE} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_SOURCE_DIR}/out/build/board_build_marker
+    COMMENT "Creating BOARD build marker for pre-flash check"
+  )
+else()
+  add_custom_command(TARGET ${EXECUTABLE} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E remove -f ${CMAKE_SOURCE_DIR}/out/build/board_build_marker
+    COMMENT "Removing BOARD build marker (NUCLEO build)"
+  )
+endif()
+
+
+
