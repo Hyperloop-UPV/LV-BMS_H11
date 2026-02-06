@@ -7,3 +7,6 @@
 [submodule "Tests/VirtualMCU"]
 	path = Tests/VirtualMCU
 	url = https://github.com/HyperloopUPV-H8/VirtualMCU
+[submodule "deps/LTC6810-Driver"]
+	path = deps/LTC6810-Driver
+	url = https://github.com/Hyperloop-UPV/LTC6810-Driver.git
