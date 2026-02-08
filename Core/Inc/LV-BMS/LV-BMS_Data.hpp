@@ -43,16 +43,16 @@ class Data {
     static inline float max_cell{};
     static inline float min_cell{};
 
-    static inline float& total_voltage{battery[0].total_voltage};
-    static inline float& GPIO_voltage_1{battery[0].GPIOs[0]};
-    static inline float& GPIO_voltage_2{battery[0].GPIOs[1]};
-    static inline float& GPIO_voltage_3{battery[0].GPIOs[2]};
-    static inline float& GPIO_voltage_4{battery[0].GPIOs[3]};
+    static inline float &total_voltage{battery[0].total_voltage};
+    static inline float &GPIO_voltage_1{battery[0].GPIOs[0]};
+    static inline float &GPIO_voltage_2{battery[0].GPIOs[1]};
+    static inline float &GPIO_voltage_3{battery[0].GPIOs[2]};
+    static inline float &GPIO_voltage_4{battery[0].GPIOs[3]};
     static inline std::array<float, 4> temperature{};
-    static inline float& conv_rate{battery[0].conv_rate};
+    static inline float &conv_rate{battery[0].conv_rate};
 
-    static inline float max_temp{};
-    static inline float min_temp{};
+    static inline float max_temperature{};
+    static inline float min_temperature{};
 
     static inline float SOC{50.0f};
 
@@ -67,10 +67,8 @@ class Data {
     static inline uint32_t last_reading_time{};
     static inline bool first_soc_flag{true};
 
-    static inline LinearSensor<float>* current_sensor{};
-    static inline float* current{};
-    static inline DigitalOutput* LED_Operational{};
-    static inline DigitalOutput* LED_Fault{};
+    static inline LinearSensor<float> *current_sensor{};
+    static inline float current{};
 
     static inline int32_t us_counter{};
 

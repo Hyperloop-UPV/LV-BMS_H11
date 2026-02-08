@@ -2,6 +2,7 @@
 #define COMMS_HPP
 
 #include "ST-LIB.hpp"
+#include "Communications/Packets/DataPackets.hpp"
 
 struct Comms {
     enum class Master : uint8_t {
@@ -16,20 +17,9 @@ struct Comms {
     // -----------------Functions-----------------
 
     static void init();
-    static void add_packets();
-    static void add_orders();
-
-    static void turn_on_pfm_callback();
-    static void turn_off_pfm_callback();
-    static void set_pfm_frequency_callback();
-    static void set_pfm_dead_time_callback();
-
-    // -----------------Flags-----------------
-    static inline bool received_turn_on_pfm{};
-    static inline bool received_turn_off_pfm{};
-    static inline bool received_set_pfm_frequency{};
-    static inline bool received_set_pfm_dead_time{};
-
+    static inline void start() {
+        DataPackets::start();
+    }
 };
 
 #endif // COMMS_HPP

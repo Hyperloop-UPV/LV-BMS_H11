@@ -1,3 +1,5 @@
+#include "LV-BMS/LV-BMS.hpp"
+
 #include "LV-BMS/LV-BMS_Data.hpp"
 
 #include "LV-BMS/LV-BMS_Pinout.hpp"
@@ -24,24 +26,18 @@ void Data::BMSConfig::SPI_CS_turn_on() {
   SPI::turn_on_chip_select(spi);
 }
 
-int32_t Data::BMSConfig::get_tick() { return Data::us_counter; }
+int32_t Data::BMSConfig::get_tick() { return GetMicroseconds(); }
 
 //---------------------------------------------------------------
 
 void Data::init() {
-  current = new float;
   current_sensor =
-    new LinearSensor<float>(CURRENT_SENSOR, 10.236f, -0.581f, current);
-
-  LED_Operational = new DigitalOutput(LED_OPERATIONAL);
-  LED_Fault = new DigitalOutput(LED_FAULT);
+    new LinearSensor<float>(CURRENT_SENSOR, 10.236f, -0.581f, &current);
 
   BMSConfig::spi_id = SPI::inscribe(SPI::spi3);
 }
 
 void Data::start() {
-  Time::register_high_precision_alarm(500, +[]() { ++us_counter; });
-
   last_reading_time = HAL_GetTick();
 }
 
@@ -90,8 +86,8 @@ void Data::get_max_min_cells() {
 }
 
 void Data::get_max_min_temperatures() {
-  max_temp = *std::max_element(temperature.begin(), temperature.end());
-  min_temp = *std::min_element(temperature.begin(), temperature.end());
+  max_temperature = *std::max_element(temperature.begin(), temperature.end());
+  min_temperature = *std::min_element(temperature.begin(), temperature.end());
 }
 
 void Data::read() {

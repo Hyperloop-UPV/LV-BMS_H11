@@ -10,42 +10,39 @@ public:
         OPERATIONAL = 1,
         FAULT = 2,
     };
-    enum class PFMState : uint8_t 
-    {
-        INACTIVE = 0,
-        ACTIVE = 1,
-    };
-    enum class BufferState : uint8_t 
-    {
-        HIGH = 0,
-        LOW = 1,
-    };
-    enum class ResetState : uint8_t 
-    {
-        LOW = 0,
-        HIGH = 1,
-    };
     
     
-    static void Battery_Data_init(float &cell_1, float &cell_2, float &cell_3, float &cell_4, float &cell_5, float &cell_6, float &voltage_min, float &voltage_max, float &total_voltage, float &SOC, float &temperature_1, float &temperature_2, float &temperature_3, float &temperature_4, float &temp_min, float &temp_max, float &current)
+    static void Battery_Voltages_init(float &cell_1, float &cell_2, float &cell_3, float &cell_4, float &cell_5, float &cell_6, float &voltage_min, float &voltage_max, float &total_voltage)
     {
-        Battery_Data = new HeapPacket(static_cast<uint16_t>(777), &cell_1, &cell_2, &cell_3, &cell_4, &cell_5, &cell_6, &voltage_min, &voltage_max, &total_voltage, &SOC, &temperature_1, &temperature_2, &temperature_3, &temperature_4, &temp_min, &temp_max, &current);
+        Battery_Voltages = new HeapPacket(static_cast<uint16_t>(777), &cell_1, &cell_2, &cell_3, &cell_4, &cell_5, &cell_6, &voltage_min, &voltage_max, &total_voltage);
+    }
+    
+    static void Battery_Temperatures_init(float &temperature_1, float &temperature_2, float &temperature_3, float &temperature_4, float &temperature_min, float &temperature_max)
+    {
+        Battery_Temperatures = new HeapPacket(static_cast<uint16_t>(778), &temperature_1, &temperature_2, &temperature_3, &temperature_4, &temperature_min, &temperature_max);
+    }
+    
+    static void State_of_Charge_init(float &SOC)
+    {
+        State_of_Charge = new HeapPacket(static_cast<uint16_t>(779), &SOC);
+    }
+    
+    static void Battery_Current_init(float &current)
+    {
+        Battery_Current = new HeapPacket(static_cast<uint16_t>(780), &current);
     }
     
     static void Current_State_init(State &State)
     {
-        Current_State = new HeapPacket(static_cast<uint16_t>(778), &State);
-    }
-    
-    static void DCLV_Data_init(PFMState &PFMState, BufferState &BufferState, ResetState &ResetState, uint32_t &frequency, uint32_t &dead_time, float &output_current, float &input_current, float &output_voltage, float &input_voltage)
-    {
-        DCLV_Data = new HeapPacket(static_cast<uint16_t>(779), &PFMState, &BufferState, &ResetState, &frequency, &dead_time, &output_current, &input_current, &output_voltage, &input_voltage);
+        Current_State = new HeapPacket(static_cast<uint16_t>(781), &State);
     }
     
     public:
-    inline static HeapPacket *Battery_Data{nullptr};
+    inline static HeapPacket *Battery_Voltages{nullptr};
+    inline static HeapPacket *Battery_Temperatures{nullptr};
+    inline static HeapPacket *State_of_Charge{nullptr};
+    inline static HeapPacket *Battery_Current{nullptr};
     inline static HeapPacket *Current_State{nullptr};
-    inline static HeapPacket *DCLV_Data{nullptr};
     
     inline static ServerSocket *control_station_tcp{nullptr};
     inline static DatagramSocket *control_station_udp{nullptr};
@@ -53,14 +50,20 @@ public:
         
     static void start()
     {   
-        if (Battery_Data == nullptr) {
-            ErrorHandler("Packet Battery_Data not initialized");
+        if (Battery_Voltages == nullptr) {
+            ErrorHandler("Packet Battery_Voltages not initialized");
+        }
+        if (Battery_Temperatures == nullptr) {
+            ErrorHandler("Packet Battery_Temperatures not initialized");
+        }
+        if (State_of_Charge == nullptr) {
+            ErrorHandler("Packet State_of_Charge not initialized");
+        }
+        if (Battery_Current == nullptr) {
+            ErrorHandler("Packet Battery_Current not initialized");
         }
         if (Current_State == nullptr) {
             ErrorHandler("Packet Current_State not initialized");
-        }
-        if (DCLV_Data == nullptr) {
-            ErrorHandler("Packet DCLV_Data not initialized");
         }
         
 
@@ -70,9 +73,11 @@ public:
         
         Scheduler::register_task(16670, +[](){
             
-            DataPackets::control_station_udp->send_packet(*DataPackets::Battery_Data);
+            DataPackets::control_station_udp->send_packet(*DataPackets::Battery_Voltages);
+            DataPackets::control_station_udp->send_packet(*DataPackets::Battery_Temperatures);
+            DataPackets::control_station_udp->send_packet(*DataPackets::State_of_Charge);
+            DataPackets::control_station_udp->send_packet(*DataPackets::Battery_Current);
             DataPackets::control_station_udp->send_packet(*DataPackets::Current_State);
-            DataPackets::control_station_udp->send_packet(*DataPackets::DCLV_Data);
             
         });
     }

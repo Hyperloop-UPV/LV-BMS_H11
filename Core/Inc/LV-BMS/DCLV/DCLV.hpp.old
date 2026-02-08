@@ -21,23 +21,23 @@ struct DCLV {
         
     static inline DualPWM* pfm{};
     static inline PFM_STATES pfm_state{};
-    static inline DigitalOutput* buffer_en;
+    static inline DigitalOutput* buffer_en{nullptr};
     static inline BUFFER_STATES buffer_state;
-    static inline DigitalOutput* reset;
+    static inline DigitalOutput* reset{nullptr};
     static inline RESET_STATES reset_state;
 
     constexpr static float duty{50.0f};
     static inline uint32_t frequency{};
     static inline uint32_t dead_time{100};
 
-    static inline LinearSensor<float>* output_current_sensor;
-    static inline LinearSensor<float>* input_current_sensor;
-    static inline LinearSensor<float>* output_voltage_sensor;
-    static inline LinearSensor <float>* input_voltage_sensor;
-    static inline float* output_current;
-    static inline float* input_current;
-    static inline float* output_voltage;
-    static inline float* input_voltage;
+    static inline LinearSensor<float> *output_current_sensor{nullptr};
+    static inline LinearSensor<float> *input_current_sensor{nullptr};
+    static inline LinearSensor<float> *output_voltage_sensor{nullptr};
+    static inline LinearSensor <float> *input_voltage_sensor{nullptr};
+    static inline float *output_current{nullptr};
+    static inline float *input_current{nullptr};
+    static inline float *output_voltage{nullptr};
+    static inline float *input_voltage{nullptr};
 
     static void init();
     static void turn_on_pfm();

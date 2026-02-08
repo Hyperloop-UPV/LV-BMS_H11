@@ -1,29 +1,21 @@
 #include "LV-BMS/LV-BMS_Comms.hpp"
 #include "LV-BMS/LV-BMS_Data.hpp"
 #include "LV-BMS/LV-BMS.hpp"
-#include "LV-BMS/DCLV/DCLV.hpp"
-
-// Callbacks
-void Comms::turn_on_pfm_callback() {
-  received_turn_on_pfm = true;
-}
-void Comms::turn_off_pfm_callback() {
-  received_turn_off_pfm = true;
-}
-void Comms::set_pfm_frequency_callback() {
-  received_set_pfm_frequency = true;
-}
-void Comms::set_pfm_dead_time_callback() {
-  received_set_pfm_dead_time = true;
-}
+//#include "LV-BMS/DCLV/DCLV.hpp"
 
 void Comms::init() {
+  DataPackets::Battery_Voltages_init(
+    Data::cells[0], Data::cells[1], Data::cells[2],
+    Data::cells[3], Data::cells[4], Data::cells[5], 
+    Data::min_cell, Data::max_cell, Data::total_voltage);
 
-  control_station = new ServerSocket(IPV4(BMSL_IP), CONTROL_STATION_PORT, 2000,1000,20);
-  
+  DataPackets::Battery_Temperatures_init(
+    Data::temperature[0], Data::temperature[1], 
+    Data::temperature[2], Data::temperature[3], 
+    Data::min_temperature, Data::max_temperature);
 
-  control_station_udp = new DatagramSocket(IPV4(BMSL_IP), CONTROL_STATION_UDP_PORT,IPV4(CONTROL_SATION_IP), CONTROL_STATION_UDP_PORT);
-  
-  add_packets();
-  add_orders();
+  DataPackets::State_of_Charge_init(Data::SOC);
+  DataPackets::Battery_Current_init(Data::current);
+
+  DataPackets::Current_State_init(LV_BMS::state);
 }

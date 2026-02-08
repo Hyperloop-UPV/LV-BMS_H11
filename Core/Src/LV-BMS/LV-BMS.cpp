@@ -1,8 +1,6 @@
 #include "LV-BMS/LV-BMS.hpp"
 
 void LV_BMS::init() {
-//   LV_BMS::state = BMS_State_Machine->general_sm.current_state;
-
 #if 0
   ProtectionManager::link_state_machine(&LV_BMS::BMS_State_Machine,
                                         static_cast<uint8_t>(BMS_State::FAULT));
@@ -13,8 +11,12 @@ void LV_BMS::init() {
   ProtectionManager::initialize();
   ProtectionManager::set_id(Boards::ID::BMSA);
 
+  global_us_timer->set_prescaler(global_us_timer->get_clock_frequency() / 1000'000);
+  global_us_timer->instance->tim->ARR = UINT32_MAX;
+  global_us_timer->counter_enable();
+
   Data::init();
-  DCLV::init();
+  //DCLV::init();
 }
 
 void LV_BMS::start() {
@@ -61,16 +63,5 @@ void LV_BMS::add_protections() {
 }
 
 void LV_BMS::update() {
-    if(Comms::received_turn_on_pfm) {
-        DCLV::turn_on_pfm();
-    }
-    if(Comms::received_turn_off_pfm) {
-        DCLV::turn_off_pfm();
-    }
-    if(Comms::received_set_pfm_frequency) {
-        DCLV::set_pfm_frequency(DCLV::frequency);
-    }
-    if(Comms::received_set_pfm_dead_time) {
-        DCLV::set_pfm_dead_time(DCLV::dead_time);
-    }
+    LV_BMS::state = LV_BMS::BMS_State_Machine.get_current_state();
 }
