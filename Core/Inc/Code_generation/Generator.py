@@ -6,15 +6,7 @@ if len(sys.argv)<2:
     sys.exit()
     
 JSONpath = "Core/Inc/Code_generation/JSON_ADE"
-aux = sys.argv[1]
-filtered = ""
-for char in aux:
-    if char.isalpha():
-        filtered += char
-    else:
-        break
-board = filtered
-
+board = sys.argv[1]
 
 boards = Generate_PacketDescription(JSONpath, board)
 

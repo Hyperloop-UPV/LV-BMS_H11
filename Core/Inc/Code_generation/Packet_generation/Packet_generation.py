@@ -173,4 +173,3 @@ def Generate_OrderPackets_hpp(board_input:str):
     with open(order_packets_path,"w") as Output:
         Output.write(template.render(context))
 
-
