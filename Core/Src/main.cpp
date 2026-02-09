@@ -26,6 +26,10 @@ constexpr auto eth =
 #endif
 #endif // STLIB_ETH
 
+#if 0
+ST_LIB::TimerWrapper<timer_us_tick_def> *global_us_timer;
+#endif
+
 int main(void) {
 #if STLIB_ETH
   using lvBMS_Board = ST_LIB::Board<eth, timer_us_tick_def, operational_led_def, fault_led_def>;
@@ -40,7 +44,11 @@ int main(void) {
 #endif
 
   ST_LIB::TimerWrapper<timer_us_tick_def> global_us_timer_decl = get_timer_instance(lvBMS_Board, timer_us_tick_def);
-  LV_BMS::global_us_timer = &global_us_timer_decl;
+#if 1
+  *(GetGlobalUsTimer()) = &global_us_timer_decl;
+#else
+  global_us_timer = &global_us_timer_decl;
+#endif
 
   LV_BMS::operational_led = &lvBMS_Board::instance_of<operational_led_def>();
   LV_BMS::fault_led = &lvBMS_Board::instance_of<fault_led_def>();

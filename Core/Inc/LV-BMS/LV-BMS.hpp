@@ -21,27 +21,34 @@ constexpr ST_LIB::TimerDomain::Timer timer_us_tick_def{{
 constexpr ST_LIB::DigitalOutputDomain::DigitalOutput operational_led_def{ST_LIB::LED_OPERATIONAL};
 constexpr ST_LIB::DigitalOutputDomain::DigitalOutput fault_led_def{ST_LIB::LED_FAULT};
 
-#define GetMicroseconds() LV_BMS::global_us_timer->instance->tim->CNT
+#if 1
+#define GetMicroseconds() (*GetGlobalUsTimer())->instance->tim->CNT
+inline ST_LIB::TimerWrapper<timer_us_tick_def>** GetGlobalUsTimer(void) {
+  static ST_LIB::TimerWrapper<timer_us_tick_def> *global_us_timer;
+  return &global_us_timer;
+}
+#else
+#define GetMicroseconds() global_us_timer->instance->tim->CNT
+extern template struct ST_LIB::TimerWrapper<timer_us_tick_def>;
 
-//static ST_LIB::TimerWrapper<timer_us_tick_def> *global_us_timer;
+extern ST_LIB::TimerWrapper<timer_us_tick_def> *global_us_timer;
+#endif
 
-namespace LV_BMS {
-  [[maybe_unused]] inline ST_LIB::TimerWrapper<timer_us_tick_def> *global_us_timer;
-  [[maybe_unused]] inline ST_LIB::DigitalOutputDomain::Instance *operational_led;
-  [[maybe_unused]] inline ST_LIB::DigitalOutputDomain::Instance *fault_led;
+struct LV_BMS {
+  static ST_LIB::DigitalOutputDomain::Instance *operational_led;
+  static ST_LIB::DigitalOutputDomain::Instance *fault_led;
 
-  inline BMS_State state;
+  static BMS_State state;
 
-
-  void set_protection_name(Protection *protection, const std::string &name);
-  void init();
-  void start();
-  void add_protections();
-  void update();
+  static void set_protection_name(Protection *protection, const std::string &name);
+  static void init();
+  static void start();
+  static void add_protections();
+  static void update();
 
 
   /*-----State Machine declaration------*/
-  constexpr auto connecting_state = make_state(BMS_State::CONNECTING,
+  static constexpr auto connecting_state = make_state(BMS_State::CONNECTING,
     Transition<BMS_State>{BMS_State::OPERATIONAL,
       []() {
         return DataPackets::control_station_tcp->is_connected();
@@ -49,7 +56,7 @@ namespace LV_BMS {
     }
   );
 
-  constexpr auto operational_state = make_state(BMS_State::OPERATIONAL,
+  static constexpr auto operational_state = make_state(BMS_State::OPERATIONAL,
     Transition<BMS_State>{BMS_State::FAULT,
       []() {
         return !DataPackets::control_station_tcp->is_connected();
@@ -57,9 +64,9 @@ namespace LV_BMS {
     }
   );
 
-  constexpr auto fault_state = make_state(BMS_State::FAULT);
+  static constexpr auto fault_state = make_state(BMS_State::FAULT);
 
-  /*static*/ inline constinit auto BMS_State_Machine = []() consteval
+  static inline constinit auto BMS_State_Machine = []() consteval
   {
     auto sm = make_state_machine(BMS_State::CONNECTING,
       connecting_state,
@@ -127,6 +134,6 @@ namespace LV_BMS {
 
     return sm;
   }();
-}; // namespace LV_BMS
+}; // struct LV_BMS
 
 #endif // LV_BMS_HPP

@@ -1,5 +1,9 @@
 #include "LV-BMS/LV-BMS.hpp"
 
+BMS_State LV_BMS::state{};
+ST_LIB::DigitalOutputDomain::Instance *LV_BMS::operational_led = nullptr;
+ST_LIB::DigitalOutputDomain::Instance *LV_BMS::fault_led = nullptr;
+
 void LV_BMS::init() {
 #if 0
   ProtectionManager::link_state_machine(&LV_BMS::BMS_State_Machine,
@@ -11,9 +15,15 @@ void LV_BMS::init() {
   ProtectionManager::initialize();
   ProtectionManager::set_id(Boards::ID::BMSA);
 
+#if 1
+  (*GetGlobalUsTimer())->set_prescaler((*GetGlobalUsTimer())->get_clock_frequency() / 1000'000);
+  (*GetGlobalUsTimer())->instance->tim->ARR = UINT32_MAX;
+  (*GetGlobalUsTimer())->counter_enable();
+#else
   global_us_timer->set_prescaler(global_us_timer->get_clock_frequency() / 1000'000);
   global_us_timer->instance->tim->ARR = UINT32_MAX;
   global_us_timer->counter_enable();
+#endif
 
   Data::init();
   //DCLV::init();
