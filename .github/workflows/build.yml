@@ -6,7 +6,11 @@ on:
       preset:
         description: >
           CMake preset to build the project, run
+<<<<<<< HEAD
           `cmake --build --list-presets` to see options
+=======
+          `cmake --list-presets` to see options
+>>>>>>> template/main
         required: false
         type: string
         default: 'nucleo-debug'
@@ -20,7 +24,11 @@ on:
       preset:
         description: >
           CMake preset to build the project, run
+<<<<<<< HEAD
           `cmake --build --list-presets` to see options
+=======
+          `cmake --list-presets` to see options
+>>>>>>> template/main
         required: false
         type: string
         default: 'nucleo-debug'
@@ -76,4 +84,8 @@ jobs:
           path: out/build/latest.elf
           retention-days: 7
           compression-level: 0
+<<<<<<< HEAD
           if-no-files-found: error
+=======
+          if-no-files-found: error
+>>>>>>> template/main
