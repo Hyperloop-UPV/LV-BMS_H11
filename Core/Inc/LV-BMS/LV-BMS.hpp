@@ -15,29 +15,11 @@
 
 using BMS_State = DataPackets::State;
 
-constexpr ST_LIB::TimerDomain::Timer timer_us_tick_def{{
+inline constexpr ST_LIB::TimerDomain::Timer timer_us_tick_def{{
   .request = ST_LIB::TimerRequest::GeneralPurpose32bit_5,
 }};
-
-constexpr ST_LIB::DigitalOutputDomain::DigitalOutput operational_led_def{ST_LIB::LED_OPERATIONAL};
-constexpr ST_LIB::DigitalOutputDomain::DigitalOutput fault_led_def{ST_LIB::LED_FAULT};
-
-#if 0
-
-#define GetMicroseconds() (GetGlobalUsTimer())->instance->tim->CNT
-ST_LIB::TimerWrapper<timer_us_tick_def>* GetGlobalUsTimer(void) {
-  static ST_LIB::TimerWrapper<timer_us_tick_def> global_us_timer;
-  return &global_us_timer;
-}
-
-#elif 0
-
-#define GetMicroseconds() global_us_timer->instance->tim->CNT
-extern template struct ST_LIB::TimerWrapper<timer_us_tick_def>;
-
-extern ST_LIB::TimerWrapper<timer_us_tick_def> *global_us_timer;
-
-#endif
+inline constexpr ST_LIB::DigitalOutputDomain::DigitalOutput operational_led_def{ST_LIB::LED_OPERATIONAL};
+inline constexpr ST_LIB::DigitalOutputDomain::DigitalOutput fault_led_def{ST_LIB::LED_FAULT};
 
 template<const ST_LIB::TimerDomain::Timer &global_tim_t>
 struct LV_BMS {
@@ -55,17 +37,12 @@ struct LV_BMS {
     static void SPI_CS_turn_on(void);
     static void SPI_CS_turn_off(void);
     static int32_t get_tick(void);
-    static constexpr int32_t tick_resolution_us{500};
+    static constexpr int32_t tick_resolution_us{1};
     static constexpr int32_t period_us{READING_PERIOD_US};
     static constexpr int32_t conv_rate_time_ms{100};
   };
   static constexpr BMS<BMSConfig> bms{};
-    static inline auto& battery = bms.get_data();
-
-  static inline std::array<std::reference_wrapper<float>, 6> cells{
-    std::ref(battery[0].cells[0]), std::ref(battery[0].cells[1]),
-    std::ref(battery[0].cells[2]), std::ref(battery[0].cells[3]),
-    std::ref(battery[0].cells[4]), std::ref(battery[0].cells[5])};
+  static inline auto &battery = bms.get_data();
 
   static inline float max_cell{};
   static inline float min_cell{};
@@ -271,8 +248,8 @@ void LV_BMS<global_tim_t>::start() {
   last_reading_time = HAL_GetTick();
   /* Comms init */ {
     DataPackets::Battery_Voltages_init(
-      cells[0], cells[1], cells[2],
-      cells[3], cells[4], cells[5], 
+      battery[0].cells[0], battery[0].cells[1], battery[0].cells[2],
+      battery[0].cells[3], battery[0].cells[4], battery[0].cells[5], 
       min_cell, max_cell, total_voltage);
 
     DataPackets::Battery_Temperatures_init(
@@ -327,8 +304,8 @@ float LV_BMS<global_tim_t>::coulomb_counting_SOC(float current) {
 
 template<const ST_LIB::TimerDomain::Timer &global_tim_t>
 float LV_BMS<global_tim_t>::ocv_battery_SOC() {
-  float total_voltage = cells[0].get() + cells[1].get() + cells[2].get() +
-                        cells[3].get() + cells[4].get() + cells[5].get();
+  float total_voltage = battery[0].cells[0] + battery[0].cells[1] + battery[0].cells[2] +
+                        battery[0].cells[3] + battery[0].cells[4] + battery[0].cells[5];
   float x =
     total_voltage - 20.0;  // to get a bigger difference between values so
                            // the polynomial is more accurate
@@ -354,8 +331,8 @@ void LV_BMS<global_tim_t>::update_SOC() {
 
 template<const ST_LIB::TimerDomain::Timer &global_tim_t>
 void LV_BMS<global_tim_t>::get_max_min_cells() {
-  max_cell = *std::max_element(cells.begin(), cells.end());
-  min_cell = *std::min_element(cells.begin(), cells.end());
+  max_cell = *std::max_element(battery[0].cells.begin(), battery[0].cells.end());
+  min_cell = *std::min_element(battery[0].cells.begin(), battery[0].cells.end());
 }
 
 template<const ST_LIB::TimerDomain::Timer &global_tim_t>

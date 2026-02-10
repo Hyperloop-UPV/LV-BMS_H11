@@ -12,23 +12,19 @@ using ST_LIB::EthernetDomain;
 #if defined(USE_PHY_LAN8742)
 constexpr auto eth =
     EthernetDomain::Ethernet(EthernetDomain::PINSET_H10, "00:00:00:00:01:FE",
-                             "192.168.1.11", "255.255.255.0");
+                             "192.168.1.11", "255.255.0.0");
 #elif defined(USE_PHY_LAN8700)
 constexpr auto eth =
     EthernetDomain::Ethernet(EthernetDomain::PINSET_H10, "00:00:00:00:01:FE",
-                             "192.168.1.11", "255.255.255.0");
+                             "192.168.1.11", "255.255.0.0");
 #elif defined(USE_PHY_KSZ8041)
 constexpr auto eth =
     EthernetDomain::Ethernet(EthernetDomain::PINSET_H11, "00:00:00:00:01:FE",
-                             "192.168.1.11", "255.255.255.0");
+                             "192.168.1.11", "255.255.0.0");
 #else
 #error "No PHY selected for Ethernet pinset selection"
 #endif
 #endif // STLIB_ETH
-
-#if 0
-ST_LIB::TimerWrapper<timer_us_tick_def> *global_us_timer;
-#endif
 
 int main(void) {
 #if STLIB_ETH

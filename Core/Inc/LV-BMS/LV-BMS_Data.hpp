@@ -15,12 +15,4 @@
 #define R0 100.0                     // Ohm
 #define TCR 0.00385
 
-using BMS_State = DataPackets::State;
-
-class Data {
-   public:
-
-   private:
-};
-
 #endif // DATA_HPP

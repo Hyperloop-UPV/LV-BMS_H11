@@ -68,8 +68,8 @@ public:
         }
         
 
-        control_station_tcp = new ServerSocket("192.168.1.254",50500);
-        control_station_udp = new DatagramSocket("192.168.1.254",50400,"192.168.0.9",50400);
+        control_station_tcp = new ServerSocket("192.168.1.11",50500);
+        control_station_udp = new DatagramSocket("192.168.1.11",50400,"192.168.0.9",50400);
         
         
         Scheduler::register_task(16670, +[](){

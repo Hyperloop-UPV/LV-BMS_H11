@@ -1,6 +1,6 @@
 #include "LV-BMS/LV-BMS.hpp"
 
-//ST_LIB::TimerWrapper<timer_us_tick_def> *LV_BMS::global_us_timer=nullptr;
+//ST_LIB::TimerWrapper<timer_us_tick_def> *LV_BMS::global_us_timer = nullptr;
 // ST_LIB::DigitalOutputDomain::Instance *LV_BMS::operational_led = nullptr;
 // ST_LIB::DigitalOutputDomain::Instance *LV_BMS::fault_led = nullptr;
 
