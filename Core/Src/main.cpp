@@ -11,16 +11,16 @@ using ST_LIB::EthernetDomain;
 #ifdef STLIB_ETH
 #if defined(USE_PHY_LAN8742)
 constexpr auto eth =
-    EthernetDomain::Ethernet(EthernetDomain::PINSET_H10, "00:80:e1:00:01:07",
-                             "192.168.1.7", "255.255.0.0");
+    EthernetDomain::Ethernet(EthernetDomain::PINSET_H10, "00:00:00:00:01:FE",
+                             "192.168.1.11", "255.255.255.0");
 #elif defined(USE_PHY_LAN8700)
 constexpr auto eth =
-    EthernetDomain::Ethernet(EthernetDomain::PINSET_H10, "00:80:e1:00:01:07",
-                             "192.168.1.7", "255.255.0.0");
+    EthernetDomain::Ethernet(EthernetDomain::PINSET_H10, "00:00:00:00:01:FE",
+                             "192.168.1.11", "255.255.255.0");
 #elif defined(USE_PHY_KSZ8041)
 constexpr auto eth =
-    EthernetDomain::Ethernet(EthernetDomain::PINSET_H11, "00:80:e1:00:01:07",
-                             "192.168.1.7", "255.255.0.0");
+    EthernetDomain::Ethernet(EthernetDomain::PINSET_H11, "00:00:00:00:01:FE",
+                             "192.168.1.11", "255.255.255.0");
 #else
 #error "No PHY selected for Ethernet pinset selection"
 #endif
@@ -43,24 +43,26 @@ int main(void) {
   auto eth_instance = &lvBMS_Board::instance_of<eth>();
 #endif
 
-  ST_LIB::TimerWrapper<timer_us_tick_def> global_us_timer_decl = get_timer_instance(lvBMS_Board, timer_us_tick_def);
-#if 1
-  *(GetGlobalUsTimer()) = &global_us_timer_decl;
-#else
-  global_us_timer = &global_us_timer_decl;
-#endif
+  ST_LIB::TimerWrapper<timer_us_tick_def> global_tick = get_timer_instance(lvBMS_Board, timer_us_tick_def);
 
-  LV_BMS::operational_led = &lvBMS_Board::instance_of<operational_led_def>();
-  LV_BMS::fault_led = &lvBMS_Board::instance_of<fault_led_def>();
+  LV_BMS<timer_us_tick_def> lvbms;
+  lvbms.set_global_us_timer(&global_tick);
 
-  LV_BMS::init();
-  STLIB::start("00:00:00:00:01:FE", "192.168.1.254", "255.255.255.0");
-  LV_BMS::start();
+  lvbms.operational_led = &lvBMS_Board::instance_of<operational_led_def>();
+  lvbms.fault_led = &lvBMS_Board::instance_of<fault_led_def>();
+
+ /*  if(lvbms.n == 11) {
+    ErrorHandler("!!!");
+  } */
+
+  lvbms.init();
+  //STLIB::start();
+  lvbms.start();
 
   Scheduler::start();
 
   while (1) {
-    STLIB::update();
+    //STLIB::update();
     Scheduler::update();
 #ifdef STLIB_ETH
     eth_instance->update();

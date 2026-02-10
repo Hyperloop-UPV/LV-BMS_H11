@@ -16,7 +16,6 @@ struct Comms {
     // -----------------Orders-----------------
     // -----------------Functions-----------------
 
-    static void init();
     static inline void start() {
         DataPackets::start();
     }

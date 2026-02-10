@@ -18,27 +18,6 @@
             "runToEntryPoint": "main",
             "svdFile": "./STM32H723.svd",
             "showDevDebugOutput": "parsed",
-            "postLaunchCommands": [
-                "monitor rtt setup 0x24000000 0x24080000 \"SEGGER RTT\"",
-                "monitor rtt start",
-                "monitor rtt server start 9090 0"
-            ],
-            "postRestartCommands": [
-                "monitor halt",
-                "monitor rtt setup 0x24000000 0x24080000 \"SEGGER RTT\"",
-                "monitor rtt start",
-                "monitor rtt server start 9090 0"
-            ],
-            "rttConfig": {
-                "enabled": true,
-                "address": "auto",
-                "decoders": [
-                    {
-                        "port": 0,
-                        "type": "console"
-                    }
-                ]
-            },
             "preLaunchTask": "CMake: build"
         },
         {
@@ -58,27 +37,6 @@
             "runToEntryPoint": "main",
             "svdFile": "./STM32H723.svd",
             "showDevDebugOutput": "parsed",
-            "postLaunchCommands": [
-                "monitor rtt setup 0x24000000 0x24080000 \"SEGGER RTT\"",
-                "monitor rtt start",
-                "monitor rtt server start 9090 0"
-            ],
-            "postRestartCommands": [
-                "monitor halt",
-                "monitor rtt setup 0x24000000 0x24080000 \"SEGGER RTT\"",
-                "monitor rtt start",
-                "monitor rtt server start 9090 0"
-            ],
-            "rttConfig": {
-                "enabled": true,
-                "address": "auto",
-                "decoders": [
-                    {
-                        "port": 0,
-                        "type": "console"
-                    }
-                ]
-            },
             // "preLaunchTask": "Pre-flash check"
         },
         {

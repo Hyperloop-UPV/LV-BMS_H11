@@ -7,6 +7,7 @@
   "C_Cpp.clang_format_sortIncludes": true,
   "C_Cpp.intelliSenseCacheSize": 0,
   "files.associations": {
+    "*.embeddedhtml": "html",
     "condition_variable": "cpp",
     "chrono": "cpp",
     "array": "cpp",
@@ -23,6 +24,14 @@
     "cstdlib": "cpp",
     "mutex": "cpp",
     "shared_mutex": "cpp",
-    "regex": "cpp"
-  }
+    "regex": "cpp",
+    "cwchar": "cpp",
+    "string": "cpp",
+    "unordered_map": "cpp",
+    "initializer_list": "cpp",
+    "iosfwd": "cpp",
+    "new": "cpp",
+    "type_traits": "cpp",
+    "future": "cpp"
+}
 }
