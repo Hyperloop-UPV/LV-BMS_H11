@@ -33,5 +33,6 @@
     "new": "cpp",
     "type_traits": "cpp",
     "future": "cpp"
-}
+},
+"cortex-debug.variableUseNaturalFormat": false
 }

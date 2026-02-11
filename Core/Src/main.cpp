@@ -26,11 +26,13 @@ constexpr auto eth =
 #endif
 #endif // STLIB_ETH
 
+TIM_TypeDef *global_us_timer;
+
 int main(void) {
 #if STLIB_ETH
-  using lvBMS_Board = ST_LIB::Board<eth, timer_us_tick_def, operational_led_def, fault_led_def>;
+  using lvBMS_Board = ST_LIB::Board<eth, timer_us_tick_def, operational_led_def, fault_led_def, current_adc>;
 #else
-  using lvBMS_Board = ST_LIB::Board<timer_us_tick_def, operational_led_def, fault_led_def>;
+  using lvBMS_Board = ST_LIB::Board<timer_us_tick_def, operational_led_def, fault_led_def, current_adc>;
 #endif
   Hard_fault_check();
   lvBMS_Board::init();
@@ -41,24 +43,24 @@ int main(void) {
 
   ST_LIB::TimerWrapper<timer_us_tick_def> global_tick = get_timer_instance(lvBMS_Board, timer_us_tick_def);
 
-  LV_BMS<timer_us_tick_def> lvbms;
-  lvbms.set_global_us_timer(&global_tick);
+  global_us_timer = global_tick.instance->tim;
 
-  lvbms.operational_led = &lvBMS_Board::instance_of<operational_led_def>();
-  lvbms.fault_led = &lvBMS_Board::instance_of<fault_led_def>();
+  global_tick.set_prescaler(global_tick.get_clock_frequency() / 10'000);
+  global_us_timer->ARR = UINT32_MAX;
+  global_tick.counter_enable();
 
- /*  if(lvbms.n == 11) {
-    ErrorHandler("!!!");
-  } */
+  LV_BMS::operational_led = &lvBMS_Board::instance_of<operational_led_def>();
+  LV_BMS::fault_led = &lvBMS_Board::instance_of<fault_led_def>();
+  LV_BMS::current_sensor = 
+    LinearSensor(lvBMS_Board::instance_of<current_adc>(), 
+                 10.236f, -0.581f, &LV_BMS::current);
 
-  lvbms.init();
-  //STLIB::start();
-  lvbms.start();
+  LV_BMS::init();
+  LV_BMS::start();
 
   Scheduler::start();
 
   while (1) {
-    //STLIB::update();
     Scheduler::update();
 #ifdef STLIB_ETH
     eth_instance->update();
