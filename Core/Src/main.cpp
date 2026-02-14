@@ -5,35 +5,9 @@
 
 #include "LV-BMS/LV-BMS.hpp"
 #include "LV-BMS/LV-BMS_Pinout.hpp"
-
-using ST_LIB::EthernetDomain;
-
-#ifdef STLIB_ETH
-#if defined(USE_PHY_LAN8742)
-constexpr auto eth =
-    EthernetDomain::Ethernet(EthernetDomain::PINSET_H10, "00:00:00:00:01:FE",
-                             "192.168.1.11", "255.255.0.0");
-#elif defined(USE_PHY_LAN8700)
-constexpr auto eth =
-    EthernetDomain::Ethernet(EthernetDomain::PINSET_H10, "00:00:00:00:01:FE",
-                             "192.168.1.11", "255.255.0.0");
-#elif defined(USE_PHY_KSZ8041)
-constexpr auto eth =
-    EthernetDomain::Ethernet(EthernetDomain::PINSET_H11, "00:00:00:00:01:FE",
-                             "192.168.1.11", "255.255.0.0");
-#else
-#error "No PHY selected for Ethernet pinset selection"
-#endif
-#endif // STLIB_ETH
-
-TIM_TypeDef *global_us_timer;
+#include "LV-BMS/LV-BMS_Domains.hpp"
 
 int main(void) {
-#if STLIB_ETH
-  using lvBMS_Board = ST_LIB::Board<eth, timer_us_tick_def, operational_led_def, fault_led_def, current_adc>;
-#else
-  using lvBMS_Board = ST_LIB::Board<timer_us_tick_def, operational_led_def, fault_led_def, current_adc>;
-#endif
   Hard_fault_check();
   lvBMS_Board::init();
 

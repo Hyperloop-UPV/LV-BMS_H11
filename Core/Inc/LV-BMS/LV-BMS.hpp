@@ -5,6 +5,7 @@
 
 #include "LV-BMS_Data.hpp"
 #include "LV-BMS_Pinout.hpp"
+#include "LV-BMS_Domains.hpp"
 
 #include "BMS.hpp"
 //#include "DCLV/DCLV.hpp"
@@ -13,17 +14,6 @@
 #include "Communications/Packets/OrderPackets.hpp"
 
 using BMS_State = DataPackets::State;
-
-inline constexpr ST_LIB::TimerDomain::Timer timer_us_tick_def{{
-  .request = ST_LIB::TimerRequest::GeneralPurpose32bit_5,
-}};
-inline constexpr ST_LIB::DigitalOutputDomain::DigitalOutput operational_led_def{ST_LIB::LED_OPERATIONAL};
-inline constexpr ST_LIB::DigitalOutputDomain::DigitalOutput fault_led_def{ST_LIB::LED_FAULT};
-
-static float adc_current_def;
-inline constexpr ST_LIB::ADCDomain::ADC current_adc(
-    ST_LIB::CURRENT_SENSOR, adc_current_def
-);
 
 extern TIM_TypeDef *global_us_timer;
 

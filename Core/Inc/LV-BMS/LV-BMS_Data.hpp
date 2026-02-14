@@ -15,4 +15,9 @@
 #define R0 100.0                     // Ohm
 #define TCR 0.00385
 
+// network
+#define LVBMS_MAC_ADDRESS "00:00:00:00:01:FE"
+#define LVBMS_IP_ADDRESS "192.168.1.11"
+#define LVBMS_IP_MASK "255.255.0.0"
+
 #endif // DATA_HPP

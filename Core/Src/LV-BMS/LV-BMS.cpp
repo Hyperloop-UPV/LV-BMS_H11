@@ -1,8 +1,6 @@
 #include "LV-BMS/LV-BMS.hpp"
 
-//ST_LIB::TimerWrapper<timer_us_tick_def> *LV_BMS::global_us_timer = nullptr;
-// ST_LIB::DigitalOutputDomain::Instance *LV_BMS::operational_led = nullptr;
-// ST_LIB::DigitalOutputDomain::Instance *LV_BMS::fault_led = nullptr;
+TIM_TypeDef *global_us_timer = nullptr;
 
 void LV_BMS::BMSConfig::SPI_transmit(const span<uint8_t> data) {
   SPI::Instance* spi = SPI::registered_spi[spi_id];
@@ -25,17 +23,14 @@ void LV_BMS::BMSConfig::SPI_CS_turn_on() {
 }
 
 int32_t LV_BMS::BMSConfig::get_tick() {
-  uint32_t micros = GetMicroseconds();
-  return micros;
+  return GetMicroseconds();
 }
 
 //---------------------------------------------------------------
 
 void LV_BMS::init() {
-#if 0
-  ProtectionManager::link_state_machine(&LV_BMS::BMS_State_Machine,
+  ProtectionManager::link_state_machine(LV_BMS::BMS_State_Machine,
                                         static_cast<uint8_t>(BMS_State::FAULT));
-#endif
 
   ProtectionManager::add_standard_protections();
   //add_protections();
