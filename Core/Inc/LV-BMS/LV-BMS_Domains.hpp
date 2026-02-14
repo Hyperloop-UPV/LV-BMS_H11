@@ -1,6 +1,7 @@
 #ifndef LV_BMS_DOMAINS_HPP
 #define LV_BMS_DOMAINS_HPP
 
+#include "ST-LIB.hpp"
 #include "LV-BMS_Data.hpp"
 
 inline constexpr ST_LIB::TimerDomain::Timer timer_us_tick_def{{
@@ -17,13 +18,13 @@ inline constexpr ST_LIB::ADCDomain::ADC current_adc(
 #ifdef STLIB_ETH
 #if defined(USE_PHY_LAN8742)
 inline constexpr auto eth =
-  EthernetDomain::Ethernet(EthernetDomain::PINSET_H10, LVBMS_MAC_ADDRESS, LVBMS_IP_ADDRESS, LVBMS_IP_MASK);
+  ST_LIB::EthernetDomain::Ethernet(ST_LIB::EthernetDomain::PINSET_H10, LVBMS_MAC_ADDRESS, LVBMS_IP_ADDRESS, LVBMS_IP_MASK);
 #elif defined(USE_PHY_LAN8700)
 inline constexpr auto eth =
-  EthernetDomain::Ethernet(EthernetDomain::PINSET_H10, LVBMS_MAC_ADDRESS, LVBMS_IP_ADDRESS, LVBMS_IP_MASK);
+  ST_LIB::EthernetDomain::Ethernet(ST_LIB::EthernetDomain::PINSET_H10, LVBMS_MAC_ADDRESS, LVBMS_IP_ADDRESS, LVBMS_IP_MASK);
 #elif defined(USE_PHY_KSZ8041)
 inline constexpr auto eth =
-  EthernetDomain::Ethernet(EthernetDomain::PINSET_H11, LVBMS_MAC_ADDRESS, LVBMS_IP_ADDRESS, LVBMS_IP_MASK);
+  ST_LIB::EthernetDomain::Ethernet(ST_LIB::EthernetDomain::PINSET_H11, LVBMS_MAC_ADDRESS, LVBMS_IP_ADDRESS, LVBMS_IP_MASK);
 #else
 #error "No PHY selected for Ethernet pinset selection"
 #endif
