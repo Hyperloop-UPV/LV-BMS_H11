@@ -3,23 +3,18 @@
 TIM_TypeDef *global_us_timer = nullptr;
 
 void LV_BMS::BMSConfig::SPI_transmit(const span<uint8_t> data) {
-  SPI::Instance* spi = SPI::registered_spi[spi_id];
-  HAL_SPI_Transmit(spi->hspi, data.data(), data.size(), 10);
+  LV_BMS::spi_wrapper->send(data);
 }
 
 void LV_BMS::BMSConfig::SPI_receive(span<uint8_t> buffer) {
-  SPI::Instance* spi = SPI::registered_spi[spi_id];
-  HAL_SPI_Receive(spi->hspi, buffer.data(), buffer.size(), 10);
+  LV_BMS::spi_wrapper->receive(buffer);
 }
 
 void LV_BMS::BMSConfig::SPI_CS_turn_off() {
-  SPI::Instance* spi = SPI::registered_spi[spi_id];
-  SPI::turn_off_chip_select(spi);
+  LV_BMS::spi_cs->turn_off();
 }
-
 void LV_BMS::BMSConfig::SPI_CS_turn_on() {
-  SPI::Instance* spi = SPI::registered_spi[spi_id];
-  SPI::turn_on_chip_select(spi);
+  LV_BMS::spi_cs->turn_on();
 }
 
 int32_t LV_BMS::BMSConfig::get_tick() {

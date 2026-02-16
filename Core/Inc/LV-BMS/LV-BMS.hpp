@@ -22,6 +22,9 @@ extern TIM_TypeDef *global_us_timer;
 struct LV_BMS {
   static inline ST_LIB::DigitalOutputDomain::Instance *operational_led;
   static inline ST_LIB::DigitalOutputDomain::Instance *fault_led;
+  static inline ST_LIB::SPIDomain::Instance *spi_pins;
+  static inline ST_LIB::DigitalOutputDomain::Instance *spi_cs;
+  static inline std::optional<ST_LIB::SPIDomain::SPIWrapper<spi_def>> spi_wrapper;
 
   static inline BMS_State state{};
 
