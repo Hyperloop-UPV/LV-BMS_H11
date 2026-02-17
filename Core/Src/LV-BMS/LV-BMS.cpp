@@ -5,7 +5,6 @@ TIM_TypeDef *global_us_timer = nullptr;
 void LV_BMS::BMSConfig::SPI_transmit(const span<uint8_t> data) {
   LV_BMS::spi_wrapper->send(data);
 }
-
 void LV_BMS::BMSConfig::SPI_receive(span<uint8_t> buffer) {
   LV_BMS::spi_wrapper->receive(buffer);
 }
@@ -26,13 +25,12 @@ int32_t LV_BMS::BMSConfig::get_tick() {
 void LV_BMS::init() {
   ProtectionManager::link_state_machine(LV_BMS::BMS_State_Machine,
                                         static_cast<uint8_t>(BMS_State::FAULT));
-
   ProtectionManager::add_standard_protections();
-  //add_protections();
   ProtectionManager::initialize();
   ProtectionManager::set_id(Boards::ID::BMSA);
+  LV_BMS::add_protections();
 
-  BMSConfig::spi_id = SPI::inscribe(SPI::spi3);
+BMSConfig::spi_id = SPI::inscribe(SPI::spi3);
 
   OrderPackets::Brake_init();
 
@@ -60,7 +58,12 @@ void LV_BMS::start() {
   DataPackets::start();
 
   Scheduler::register_task(1000, []() {
-    BMS_State_Machine.check_transitions();
+    BMS_State prev_state = LV_BMS::state;
+    LV_BMS::BMS_State_Machine.check_transitions();
+    LV_BMS::state = BMS_State_Machine.get_current_state();
+    if(LV_BMS::state != prev_state) [[unlikely]] {
+      
+    }
   });
 
   Scheduler::register_task(100'000, []() {
@@ -79,10 +82,6 @@ void LV_BMS::add_protections() {
   Protection* soc_protection = &ProtectionManager::_add_protection(
     &SOC, Boundary<float, OUT_OF_RANGE>{24.0f, 80.0f});
   set_protection_name(soc_protection, "SOC");
-}
-
-void LV_BMS::update() {
-  state = BMS_State_Machine.get_current_state();
 }
 
 //------------------- SOC ------------------------
@@ -151,7 +150,7 @@ void LV_BMS::read() {
 }
 
 #if 0
-void LV_BMS::add_protections() {
+void LV_BMS::add_protections_old() {
   Protection* soc_protection = &ProtectionManager::_add_protection(
     &Data::SOC, Boundary<float, OUT_OF_RANGE>{24.0f, 80.0f});
   set_protection_name(soc_protection, "SOC");

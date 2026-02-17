@@ -28,6 +28,7 @@ struct LV_BMS {
 
   static inline BMS_State state{};
 
+  //--------------- BMS CONFIG FOR LTC6810-DRIVER ----------------
   struct BMSConfig {
     static inline uint8_t spi_id{};
     static constexpr size_t n_LTC6810{1};
@@ -56,7 +57,6 @@ struct LV_BMS {
   static inline uint32_t last_reading_time{};
   static inline bool first_soc_flag{true};
 
-  // TODO: does this have to be volatile?
   static inline float current{};
   static inline LinearSensor<float> current_sensor{};
 
@@ -74,7 +74,6 @@ struct LV_BMS {
   static void init();
   static void start();
   static void add_protections();
-  static void update();
 
   static float coulomb_counting_SOC(float current);
   static float ocv_battery_SOC();
@@ -175,7 +174,5 @@ struct LV_BMS {
     return sm;
   }();
 }; // struct LV_BMS
-
-//--------------- BMS CONFIG FOR LTC6810-DRIVER ----------------
 
 #endif // LV_BMS_HPP
