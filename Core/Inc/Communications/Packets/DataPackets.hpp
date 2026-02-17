@@ -78,6 +78,9 @@ public:
             DataPackets::control_station_udp->send_packet(*DataPackets::Battery_Temperatures_packet);
             DataPackets::control_station_udp->send_packet(*DataPackets::State_of_Charge_packet);
             DataPackets::control_station_udp->send_packet(*DataPackets::Battery_Current_packet);
+            
+        });
+        Scheduler::register_task(100000, +[](){
             DataPackets::control_station_udp->send_packet(*DataPackets::Current_State_packet);
             
         });

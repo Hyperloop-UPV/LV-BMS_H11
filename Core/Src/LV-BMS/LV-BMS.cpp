@@ -62,7 +62,7 @@ void LV_BMS::start() {
     LV_BMS::BMS_State_Machine.check_transitions();
     LV_BMS::state = BMS_State_Machine.get_current_state();
     if(LV_BMS::state != prev_state) [[unlikely]] {
-      
+      DataPackets::control_station_udp->send_packet(*DataPackets::Current_State_packet);
     }
   });
 
