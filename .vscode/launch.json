@@ -13,16 +13,7 @@
         ".vscode/stlink.cfg",
         ".vscode/stm32h7x.cfg"
       ],
-      "serverArgs": [
-        "-c",
-        "transport select swd",
-        "-c",
-        "gdb_port 3333",
-        "-c",
-        "tcl_port 6666",
-        "-c",
-        "telnet_port 4444"
-      ],
+      "serverArgs": [],
       "gdbPath": "arm-none-eabi-gdb",
       "device": "STM32H723ZGTx",
       "interface": "swd",
@@ -67,16 +58,7 @@
         ".vscode/stlink.cfg",
         ".vscode/stm32h7x.cfg"
       ],
-      "serverArgs": [
-        "-c",
-        "transport select swd",
-        "-c",
-        "gdb_port 3333",
-        "-c",
-        "tcl_port 6666",
-        "-c",
-        "telnet_port 4444"
-      ],
+      "serverArgs": [],
       "gdbPath": "arm-none-eabi-gdb",
       "device": "STM32H723ZGTx",
       "interface": "swd",
@@ -152,9 +134,6 @@
       "runToEntryPoint": "main",
       "svdFile": "${workspaceFolder}/STM32H723.svd",
       "showDevDebugOutput": "parsed",
-      "preLaunchCommands": [
-        "monitor reset halt"
-      ],
       "preLaunchTask": "CMake: build"
     },
     {
@@ -170,10 +149,7 @@
       "interface": "swd",
       "runToEntryPoint": "main",
       "svdFile": "${workspaceFolder}/STM32H723.svd",
-      "showDevDebugOutput": "parsed",
-      "preLaunchCommands": [
-        "monitor reset halt"
-      ]
+      "showDevDebugOutput": "parsed"
     },
     {
       "name": "MCU | ST-LINK | Attach (External GDB Server)",
