@@ -38,8 +38,8 @@ def Get_data_context(board:BoardDescription):
         return Enums
 
 
-    def GenerateDataPackets(board:BoardDescription):
-        Packets =[]
+    def GenerateDataPackets(board: BoardDescription):
+        Packets = []
         totaldata = []
         for packet in board.packets:
             for packet_instance in board.packets[packet]:
@@ -47,8 +47,8 @@ def Get_data_context(board:BoardDescription):
                     tempdata = ""
                     tempdata_but_pointer = ""
                     for variable in packet_instance.variables:
-                        tempdata +=(str(variable) +",")
-                        tempdata_but_pointer +=("&"+str(variable) +",")
+                        tempdata += (str(variable) + ",")
+                        tempdata_but_pointer += ("&" + str(variable) + ",")
                     if tempdata.endswith(","):
                         tempdata = tempdata[:-1]
                     if tempdata_but_pointer.endswith(","):
@@ -61,7 +61,7 @@ def Get_data_context(board:BoardDescription):
                             "type": measurement.type
                         })
 
-                    aux_packet = {"name": packet_instance.name, "data":tempdata_but_pointer.replace(" ", "_").replace("-", "_") , "id": packet_instance.id, "variables": packet_variables}
+                    aux_packet = {"name": packet_instance.name, "data": tempdata_but_pointer.replace(" ", "_").replace("-", "_"), "id": packet_instance.id, "variables": packet_variables}
                     Packets.append(aux_packet)
                     for measurement in packet_instance.measurements:
                         aux_data = {"type": measurement.type, "name": measurement.id.replace(" ", "_").replace("-", "_")}
@@ -135,8 +135,8 @@ def Generate_DataPackets_hpp(board_input:str):
 
 #--------------OrderPackets.hpp generation---------------#
 
-def Get_order_context(board:BoardDescription):
-    def GenerateOrderEnum(board:BoardDescription):
+def Get_order_context(board: BoardDescription):
+    def GenerateOrderEnum(board: BoardDescription):
         Enums = []
         for packet in board.packets:
             for packet_instance in board.packets[packet]:
@@ -146,9 +146,8 @@ def Get_order_context(board:BoardDescription):
                             Enums.append(measurement.enum)
         return Enums
 
-
-    def GenerateOrderPackets(board:BoardDescription):
-        Packets =[]
+    def GenerateOrderPackets(board: BoardDescription):
+        Packets = []
         totaldata = []
         for packet in board.packets:
             for packet_instance in board.packets[packet]:
@@ -156,8 +155,8 @@ def Get_order_context(board:BoardDescription):
                     tempdata = ""
                     tempdata_but_pointer = ""
                     for variable in packet_instance.variables:
-                        tempdata +=(str(variable) +",")
-                        tempdata_but_pointer +=("&"+str(variable) +",")
+                        tempdata += (str(variable) + ",")
+                        tempdata_but_pointer += ("&" + str(variable) + ",")
                     if tempdata.endswith(","):
                         tempdata = tempdata[:-1]
                         tempdata_but_pointer = tempdata_but_pointer[:-1]
@@ -169,17 +168,16 @@ def Get_order_context(board:BoardDescription):
                             "type": measurement.type
                         })
 
-                    aux_packet = {"name": packet_instance.name, "data":tempdata_but_pointer , "id": packet_instance.id, "variables": packet_variables}
+                    aux_packet = {"name": packet_instance.name, "data": tempdata_but_pointer, "id": packet_instance.id, "variables": packet_variables}
                     Packets.append(aux_packet)
                     for measurement in packet_instance.measurements:
-                        aux_data = {"type": measurement.type, "name": measurement.id}
+                        aux_data = {"type": measurement.type, "name": measurement.name}
                         if not any(x["name"] == aux_data["name"] for x in totaldata):
                             totaldata.append(aux_data)
 
-        return Packets,totaldata
+        return Packets, totaldata
 
-
-    packets,data = GenerateOrderPackets(board)
+    packets, data = GenerateOrderPackets(board)
     context = {
         "board": board.name,
         "enums": GenerateOrderEnum(board),
@@ -203,6 +201,5 @@ def Generate_OrderPackets_hpp(board_input:str):
     template = env.get_template("OrderTemplate.hpp")
     context = Get_order_context(board_instance)
 
-
-    with open(order_packets_path,"w") as Output:
+    with open(order_packets_path, "w") as Output:
         Output.write(template.render(context))
