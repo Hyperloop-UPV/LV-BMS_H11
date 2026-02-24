@@ -90,7 +90,7 @@ struct LV_BMS {
   static constexpr auto connecting_state = make_state(BMS_State::CONNECTING,
     Transition<BMS_State>{BMS_State::OPERATIONAL,
       []() {
-        return DataPackets::control_station_tcp->is_connected();
+        return OrderPackets::control_station_tcp->is_connected();
       }
     }
   );
@@ -98,7 +98,7 @@ struct LV_BMS {
   static constexpr auto operational_state = make_state(BMS_State::OPERATIONAL,
     Transition<BMS_State>{BMS_State::FAULT,
       []() {
-        return !DataPackets::control_station_tcp->is_connected();
+        return !OrderPackets::control_station_tcp->is_connected();
       }
     }
   );

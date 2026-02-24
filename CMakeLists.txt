@@ -5,7 +5,7 @@ include(CTest)
 enable_testing()
 
 set(EXECUTABLE ${PROJECT_NAME}.elf)
-set(Board "LV-BMS") # User must change the Board name
+set(BOARD_NAME "LV-BMS")
 set(STLIB_DIR ${CMAKE_CURRENT_LIST_DIR}/deps/ST-LIB)
 set(LD_SCRIPT ${STLIB_DIR}/STM32H723ZGTX_FLASH.ld)
 

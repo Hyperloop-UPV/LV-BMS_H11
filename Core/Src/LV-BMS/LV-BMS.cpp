@@ -30,7 +30,7 @@ void LV_BMS::init() {
   ProtectionManager::set_id(Boards::ID::BMSA);
   LV_BMS::add_protections();
 
-  BMSConfig::spi_id = SPI::inscribe(SPI::spi3);
+  //BMSConfig::spi_id = SPI::inscribe(SPI::spi3);
 
   OrderPackets::Brake_init();
 
