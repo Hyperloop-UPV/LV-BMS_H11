@@ -274,20 +274,14 @@ __attribute__((noreturn, optimize("O0"))) void my_fault_handler_c(sContextStateF
         &metadata_buffer,
         sizeof(metadata_buffer)
     );
-    // In debug builds, stop here instead of forcing a reset loop.
-#ifndef NDEBUG
-    __BKPT(0);
-    while (1) {
-    }
-#else
-    // In debug sessions on release binaries, stop here as well.
+
+    // halt only when a debugger is attached, otherwise reboot.
     volatile uint32_t* dhcsr = (volatile uint32_t*)0xE000EDF0;
     if ((*dhcsr & 0x1U) != 0U) {
         __BKPT(0);
         while (1) {
         }
     }
-#endif
 
     // Reboot the system in non-debug runs.
     volatile uint32_t* aircr = (volatile uint32_t*)0xE000ED0C;
