@@ -6,7 +6,7 @@
 #include "Communications/Packets/DataPackets.hpp"
 
 #define N_BATTERIES 1
-#define READING_PERIOD_US 17000
+#define READING_PERIOD_US 25000
 #define CAPACITY_AH 20.0f
 #define REST_THRESHOLD 0.1f
 

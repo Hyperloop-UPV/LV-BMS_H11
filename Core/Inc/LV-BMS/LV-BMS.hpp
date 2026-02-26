@@ -141,6 +141,10 @@ struct LV_BMS {
       read();
     }, std::chrono::milliseconds(100), connecting_state);
 
+    sm.add_cyclic_action([]() {
+      LV_BMS::operational_led->toggle();
+    }, std::chrono::milliseconds(300), connecting_state);
+
     //sm.add_cyclic_action([]() {
     //  DCLV::read_sensors();
     //}, std::chrono::milliseconds(100), connecting_state);

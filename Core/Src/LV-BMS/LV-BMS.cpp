@@ -23,22 +23,6 @@ int32_t LV_BMS::BMSConfig::get_tick() {
 //---------------------------------------------------------------
 
 void LV_BMS::init() {
-  ProtectionManager::link_state_machine(LV_BMS::BMS_State_Machine,
-                                        static_cast<uint8_t>(BMS_State::FAULT));
-  ProtectionManager::add_standard_protections();
-  ProtectionManager::initialize();
-  ProtectionManager::set_id(Boards::ID::BMSA);
-  LV_BMS::add_protections();
-
-  //BMSConfig::spi_id = SPI::inscribe(SPI::spi3);
-
-  OrderPackets::Brake_init();
-
-  //DCLV::init();
-}
-
-void LV_BMS::start() {
-  last_reading_time = HAL_GetTick();
   /* Comms init */ {
     DataPackets::Battery_Voltages_init(
       battery[0].cells[0], battery[0].cells[1], battery[0].cells[2],
@@ -57,7 +41,28 @@ void LV_BMS::start() {
   }
   DataPackets::start();
 
+  OrderPackets::Brake_init();
+  OrderPackets::start();
+
+  Scheduler::register_task((READING_PERIOD_US / 2) - 100, []() {
+    bms.update();
+  });
+
+  ProtectionManager::link_state_machine(LV_BMS::BMS_State_Machine,
+                                        static_cast<uint8_t>(BMS_State::FAULT));
+  ProtectionManager::add_standard_protections();
+  ProtectionManager::initialize();
+  ProtectionManager::set_id(Boards::ID::BMSA);
+  //LV_BMS::add_protections();
+
+  //DCLV::init();
+}
+
+void LV_BMS::start() {
+  last_reading_time = HAL_GetTick();
+
   Scheduler::register_task(1000, []() {
+    ProtectionManager::check_protections();
     BMS_State prev_state = LV_BMS::state;
     LV_BMS::BMS_State_Machine.check_transitions();
     LV_BMS::state = BMS_State_Machine.get_current_state();
@@ -115,6 +120,9 @@ void LV_BMS::update_SOC() {
       SOC += coulomb_counting_SOC(0 - *current);
     } else { */
       SOC = ocv_battery_SOC();
+      if((SOC > -100.0f) && (SOC < 200.0f) && ((SOC < 20.0f) || (SOC > 80.0f))) [[unlikely]] {
+        BMS_State_Machine.force_change_state(static_cast<uint8_t>(BMS_State::FAULT));
+      }
    /*  }
   } */
 }
@@ -138,7 +146,6 @@ void LV_BMS::read_temperature(const float voltage, float* temperature) {
 }
 
 void LV_BMS::read() {
-  bms.update();
   get_max_min_cells();
   current_sensor.read();
   update_SOC();
