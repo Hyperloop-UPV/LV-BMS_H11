@@ -61,8 +61,11 @@ void LV_BMS::init() {
 void LV_BMS::start() {
   last_reading_time = HAL_GetTick();
 
+  //Scheduler::register_task(1000*10, [](){
+  //  ProtectionManager::check_protections();
+  //});
+
   Scheduler::register_task(1000, []() {
-    ProtectionManager::check_protections();
     BMS_State prev_state = LV_BMS::state;
     LV_BMS::BMS_State_Machine.check_transitions();
     LV_BMS::state = BMS_State_Machine.get_current_state();
