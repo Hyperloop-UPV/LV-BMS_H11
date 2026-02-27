@@ -19,11 +19,8 @@
 #define LVBMS_MAC_ADDRESS "00:00:00:00:01:FE"
 #define LVBMS_IP_ADDRESS "192.168.1.11"
 
-#define USE_24BitMask 1
-#if USE_24BitMask
-#define LVBMS_IP_MASK "255.255.255.0"
-#else
-#define LVBMS_IP_MASK "255.255.0.0"
-#endif
+#define IP_BITMASK_BITS 24
+#include "ip_bitmask.h"
+#define LVBMS_IP_MASK IP_BITMASK_CSTR
 
 #endif // DATA_HPP
