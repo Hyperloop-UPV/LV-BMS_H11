@@ -1,7 +1,11 @@
 #ifndef IP_BITMASK_H
 #define IP_BITMASK_H
 
-#define IP_BITMASK_BITS 24
+/* usage:
+ * 1. #define IP_BITMASK_BITS 27 // any amount in range [0,32]
+ * 2. #include "the name of this file.h"
+ * 3. you can now use IP_BITMASK_CSTR // in this case "255.255.255.7"
+ */
 
 #if IP_BITMASK_BITS >= 24 && IP_BITMASK_BITS <= 32
 # define IP_BITMASK_PREFIX "255.255.255."
