@@ -51,9 +51,9 @@ void LV_BMS::init() {
   ProtectionManager::link_state_machine(LV_BMS::BMS_State_Machine,
                                         static_cast<uint8_t>(BMS_State::FAULT));
   ProtectionManager::add_standard_protections();
-  ProtectionManager::initialize();
   ProtectionManager::set_id(Boards::ID::BMSA);
   //LV_BMS::add_protections();
+  ProtectionManager::initialize();
 
   //DCLV::init();
 }
