@@ -124,6 +124,7 @@ void LV_BMS::update_SOC() {
     } else { */
       SOC = ocv_battery_SOC();
       if((SOC > -100.0f) && (SOC < 200.0f) && ((SOC < 20.0f) || (SOC > 80.0f))) [[unlikely]] {
+        ErrorHandler("Fault: LV battery State of charge not in range [20, 80]");
         BMS_State_Machine.force_change_state(static_cast<uint8_t>(BMS_State::FAULT));
       }
    /*  }
