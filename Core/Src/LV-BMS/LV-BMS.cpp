@@ -1,7 +1,5 @@
 #include "LV-BMS/LV-BMS.hpp"
 
-TIM_TypeDef *global_us_timer = nullptr;
-
 void LV_BMS::BMSConfig::SPI_transmit(const span<uint8_t> data) {
   LV_BMS::spi_wrapper->send(data);
 }
@@ -65,6 +63,7 @@ void LV_BMS::start() {
     ProtectionManager::check_protections();
   });
 
+  BMS_State_Machine.start();
   Scheduler::register_task(1000, []() {
     BMS_State prev_state = LV_BMS::state;
     LV_BMS::BMS_State_Machine.check_transitions();
@@ -77,7 +76,6 @@ void LV_BMS::start() {
   Scheduler::register_task(100'000, []() {
     read();
   });
-  BMS_State_Machine.start();
 }
 
 void LV_BMS::set_protection_name(Protection* protection,

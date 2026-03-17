@@ -15,9 +15,7 @@
 
 using BMS_State = DataPackets::State;
 
-extern TIM_TypeDef *global_us_timer;
-
-#define GetMicroseconds() global_us_timer->CNT
+#define GetMicroseconds() Scheduler::get_global_tick()
 
 struct LV_BMS {
   static inline ST_LIB::DigitalOutputDomain::Instance *operational_led;
