@@ -9,7 +9,7 @@
 //////////////////////////////////////////////////////////
 
 inline constexpr ST_LIB::TimerDomain::Timer timer_us_tick_def{{
-  .request = ST_LIB::TimerRequest::GeneralPurpose32bit_5,
+  .request = ST_LIB::TimerRequest::Any32bit,
 }};
 
 //////////////////////////////////////////////////////////
