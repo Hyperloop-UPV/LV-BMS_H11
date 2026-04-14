@@ -1,0 +1,65 @@
+BCC SW driver for MC33771C and MC33772C (Lite) - Change log:
+
+2.2
+    - Driver:
+        - Added support of MC33772C (bcc_device_t in bcc_drv_config_t).
+        - New format of BCC register maps (MC33771C.h and MC33772C.h instead of bcc_mc33771c.h).
+          Macros for conversion of measurement results, voltage thresholds and other configurations
+          moved from bcc_mc33771c.h and bcc.h to bcc_utils.h.
+        - Add const qualifier to all API parameters where possible.
+        - An internal timeout mechanism implemented in all potentially endless loops within the driver.
+          Functions BCC_EEPROM_Read(), BCC_EEPROM_Write() and BCC_Meas_StartAndWait() return
+          BCC_STATUS_COM_TIMEOUT in this case.
+        - New API functions:
+            - BCC_Meas_StartAndWait(),
+            - BCC_Meas_GetCoulombCounter(),
+            - BCC_Meas_GetIsenseVoltage(),
+            - BCC_Meas_GetStackVoltage(),
+            - BCC_Meas_GetCellVoltages(),
+            - BCC_Meas_GetCellVoltage(),
+            - BCC_Meas_GetAnVoltages(),
+            - BCC_Meas_GetAnVoltage(),
+            - BCC_Meas_GetIcTemperature(),
+            - BCC_GPIO_SetMode(),
+            - BCC_GPIO_ReadPin()
+        - New extern functions required to be implemented by the user:
+            - BCC_MCU_StartTimeout
+            - BCC_MCU_TimeoutExpired
+        - New value in bcc_status_t: BCC_STATUS_DATA_RDY, BCC_STATUS_TIMEOUT_START.
+        - Items in bcc_avg_t have different values.
+
+    - S32DS Examples:
+        - All examples:
+            - Changes required by the updated driver and its updated API
+        - BCC_S32K144_Monitoring and BCC_S32K144_Monitoring_Diagnostics:
+            - Support of MC33772C added (BCC device can be selected by "MC33771C" or "MC33772C" macros in Sources/common.h).
+        - BCC_S32K144_DualChain and BCC_S32K144_LoopBack:
+            - Support of MC33772C added (BCC device can be selected by "MC33771C" or "MC33772C" macros in main.c).
+
+2.1
+    - Driver:
+        - SPI communication mode support added (bcc_mode_t in bcc_drv_config_t).
+        - Coulomb counting and ISENSE measurement added (see bcc_measurements_t and BCC_Meas_GetRawValues()).
+        - New API function: BCC_HardwareReset().
+        - New low level API functions required: BCC_MCU_TransferSpi(), BCC_MCU_WriteRstPin().
+        - BCC_MCU_WriteCsbPin() requires handling of CSB pin in the SPI mode.
+        - New value in bcc_status_t: BCC_STATUS_COM_NULL; bcc_status_t regorganized (enums have different values).
+        - Fixed macros BCC_GET_COULOMB_CNT, BCC_SET_ALL_CT_UV_TH and BCC_SET_ALL_CT_OV_TH in bcc_mc33771c.h.
+        - CSB_TX is newly low (logic 0) for 25 us instead of 21 us in BCC_WakeUp() in the TPL mode. 
+        - Pre-calculated cell map for speed optimization of the BCC_Init() function.
+        - Speed optimizition of the BCC_Diag_ADC1() and BCC_Diag_CurrentMeas() functions.
+        - Comments of all functions and macros reviewed.
+        - Inserted recommendation into the description of the function BCC_WakeUp().
+        
+    - S32DS Examples:
+        - All examples:
+            - Implementation of BCC_MCU_TransferSpi, BCC_MCU_WriteRstPin added.
+            - bcc_mode_t in bcc_drv_config_t filled by a correct value.
+        - BCC_S32K144_FreeMASTER, BCC_S32K144_Monitoring and BCC_S32K144_Monitoring_Diagnostics:
+            - SPI communication mode added (HW setup can be selected by "TPL" or "SPI" macro in Sources/common.h).
+        - BCC_S32K144_FreeMASTER:
+            - MCU app: Handling of SW_Reset command from GUI fixed.
+            - GUI: State of the buttons (enabled/disabled) after SW reset fixed.
+        
+2.0
+    - Initial release

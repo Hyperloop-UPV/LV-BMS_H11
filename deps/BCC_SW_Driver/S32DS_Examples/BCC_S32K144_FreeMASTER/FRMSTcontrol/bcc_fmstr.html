@@ -1,0 +1,521 @@
+<!--
+ * Copyright 2016 - 2019 NXP
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * o Redistributions of source code must retain the above copyright notice, this list
+ *   of conditions and the following disclaimer.
+ *
+ * o Redistributions in binary form must reproduce the above copyright notice, this
+ *   list of conditions and the following disclaimer in the documentation and/or
+ *   other materials provided with the distribution.
+ *
+ * o Neither the name of the copyright holder nor the names of its
+ *   contributors may be used to endorse or promote products derived from this
+ *   software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ -->
+<!doctype html>
+                                                           
+<html>
+  <head>
+    <title>Battery Cell Controller (MC33771C) FreeMASTER GUI</title>
+    <meta http-equiv="content-type" content="text/html; charset=windows-1250">
+                                                                                         
+    <link rel="stylesheet" type="text/css" href="jquery-ui-1.11.4/jquery-ui.min.css" >
+    <link rel="stylesheet" type="text/css" href="jquery-ui-1.11.4/jquery-ui.structure.min.css" >
+    <link rel="stylesheet" type="text/css" href="bcc_fmstr.css">
+    
+    <!-- jQuery 2.14 does not support IE6,7,8 but utilize the same API as previous versions -->
+    <script type="text/javascript" src="js/jquery-1.11.3.min.js"></script>
+    <!--<script type="text/javascript" src="js/jquery-2.14.min.js"></script>-->
+    <!--<script type="text/javascript" src="jquery-ui-1.11.4/external/jquery/jquery.js"></script>-->
+    <script type="text/javascript" src="jquery-ui-1.11.4/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="js/gauge/gauge.min.js"></script>
+    <script type="text/javascript" src="bcc_fmstr.js"></script>
+   
+  </head>
+  <body onload="PageInit()"> 
+    <!-- create FreeMASTER ActiveX object "fmstr" -->
+    <object id="fmstr" height="0" width="0" classid="clsid:48A185F1-FFDB-11D3-80E3-00C04F176153">
+    </object>
+    
+    <div id="container">
+      <div id="header">
+        <img src="images/NXP_logo.png" alt="NXP Semiconductors" border="0" height="61" width="200" style="float:right;">
+        <h1>Battery Cell Controller</h1>
+        <p>Model: MC33771C</p>         
+      </div>
+      <div id="sub-container" class="ui-widget">      
+        <!-- Controls. -->
+        <div id="bcc-control" class="ui-widget-content ui-corner-all box">
+          <h3 class="ui-widget-header ui-corner-all box-header">Control</h3>
+          <div class="content-wrapper">
+            <h3 class="ui-widget-header ui-corner-all box-header">Mode</h3>
+            <form>
+              <div id="bcc-controls-mode">
+                <input type="radio" id="mode-sleep" name="radio" value="sleep"><label for="mode-sleep">Sleep</label>
+                <input type="radio" id="mode-normal" name="radio" value="normal" checked="checked"><label for="mode-normal">Normal</label>
+              </div>
+            </form>
+          </div>
+          <div class="content-wrapper">
+            <button id="bcc-controls-reset">Software Reset</button>
+          </div>
+          
+          <div class="content-wrapper">
+            <h3 class="ui-widget-header ui-corner-all box-header">Cell Balancing</h3>
+            <form>
+              <div id="bcc-controls-cb">
+                <!--
+                <button id="cb-on">Enabled</button>
+                <button id="cb-off">Disabled</button>
+                -->
+                <input type="radio" id="cb-on" name="radio" value="on"><label for="cb-on">Enabled</label>
+                <input type="radio" id="cb-off" name="radio" value="of" checked="checked"><label for="cb-off">Disabled</label>
+              </div>
+            </form>
+            
+            <p>
+              <label for="bcc-controls-cb-timeout-amount">Timeout [minutes]:</label>
+              <input type="text" id="bcc-controls-cb-timeout-amount" readonly style="border:0; color:#f6931f; font-weight:bold; width: 60px;">
+            </p>
+            <div style="padding: 10px">			
+              <div id="bcc-controls-cb-timeout"></div>
+			</div>
+			
+            <table style="text-align: left; width: 100%">
+                <tr>
+                  <td><input type="checkbox" id="cb-1" onchange="CBxChanged(this, 0)"><label for="cb-1">Cell 1</label></td>
+			      <td><input type="checkbox" id="cb-6" onchange="CBxChanged(this, 5)"><label for="cb-6">Cell 6</label></td>
+			      <td><input type="checkbox" id="cb-11" onchange="CBxChanged(this, 10)"><label for="cb-11">Cell 11</label></td>
+                </tr>
+                <tr>
+			      <td><input type="checkbox" id="cb-2" onchange="CBxChanged(this, 1)"><label for="cb-2">Cell 2</label></td>
+			      <td><input type="checkbox" id="cb-7" onchange="CBxChanged(this, 6)"><label for="cb-7">Cell 7</label></td>
+			      <td><input type="checkbox" id="cb-12" onchange="CBxChanged(this, 11)"><label for="cb-12">Cell 12</label></td>
+                </tr>
+                <tr>
+			      <td><input type="checkbox" id="cb-3" onchange="CBxChanged(this, 2)"><label for="cb-3">Cell 3</label></td>
+                  <td><input type="checkbox" id="cb-8" onchange="CBxChanged(this, 7)"><label for="cb-8">Cell 8</label></td>
+			      <td><input type="checkbox" id="cb-13" onchange="CBxChanged(this, 12)"><label for="cb-13">Cell 13</label></td>
+                </tr>
+                <tr>
+			      <td><input type="checkbox" id="cb-4" onchange="CBxChanged(this, 3)"><label for="cb-4">Cell 4</label></td>
+			      <td><input type="checkbox" id="cb-9" onchange="CBxChanged(this, 8)"><label for="cb-9">Cell 9</label></td>
+			      <td><input type="checkbox" id="cb-14" onchange="CBxChanged(this, 13)"><label for="cb-14">Cell 14</label></td>
+                </tr>
+                <tr>
+			      <td><input type="checkbox" id="cb-5" onchange="CBxChanged(this, 4)"><label for="cb-5">Cell 5</label></td>
+			      <td><input type="checkbox" id="cb-10" onchange="CBxChanged(this, 9)"><label for="cb-10">Cell 10</label></td>
+				  <td></td>
+                </tr>
+			</table>
+		  </div>
+
+          <div class="content-wrapper">
+            <h3 class="ui-widget-header ui-corner-all box-header">Fault Status</h3>
+            <div class="content-wrapper">
+               <button id="bcc-controls-clear">Clear All Faults</button>
+            </div>
+          </div>
+          
+        </div> <!-- End of controls container. -->
+        
+        <div id="bcc-monitoring" class="ui-widget-content ui-corner-all box">
+          <h3 class="ui-widget-header ui-corner-all box-header">Monitoring</h3>
+          <div id="monitoring-tabs">
+            <ul>
+              <li><a href="#bcc-measurements">Measurements</a></li>
+              <li><a href="#bcc-thresholds">Thresholds</a></li>
+              <li><a href="#bcc-status">Status</a></li>
+            </ul>
+            <div id="bcc-measurements" class="content-wrapper">
+              <table id="bcc-measurements-tab" class="bcc-tab">
+                <tr>
+                  <th>Measured Item</th>
+                  <th>Value</th>
+                  <th>Unit</th>
+                </tr>
+                <tr>
+                  <td title="Battery stack voltage.">MEAS_STACK</td>
+                  <td><span id="MEAS_STACK">0</span></td>
+                  <td>mV</td>
+                </tr>
+                <tr>
+                  <td title="Voltage measured on cell 1.">MEAS_CELL1</td>
+                  <td><span id="MEAS_CELL1">0</span></td>
+                  <td>mV</td>
+                </tr>
+                <tr>
+                  <td title="Voltage measured on cell 2.">MEAS_CELL2</td>
+                  <td><span id="MEAS_CELL2">0</span></td>
+                  <td>mV</td>
+                </tr>
+                <tr>
+                  <td title="Voltage measured on cell 3.">MEAS_CELL3</td>
+                  <td><span id="MEAS_CELL3">0</span></td>
+                  <td>mV</td>
+                </tr>
+                <tr>
+                  <td title="Voltage measured on cell 4.">MEAS_CELL4</td>
+                  <td><span id="MEAS_CELL4">0</span></td>
+                  <td>mV</td>
+                </tr>
+                <tr>
+                  <td title="Voltage measured on cell 5.">MEAS_CELL5</td>
+                  <td><span id="MEAS_CELL5">0</span></td>
+                  <td>mV</td>
+                </tr>
+                <tr>
+                  <td title="Voltage measured on cell 6.">MEAS_CELL6</td>
+                  <td><span id="MEAS_CELL6">0</span></td>
+                  <td>mV</td>
+                </tr>
+                <tr>
+                  <td title="Voltage measured on cell 7.">MEAS_CELL7</td>
+                  <td><span id="MEAS_CELL7">0</span></td>
+                  <td>mV</td>
+                </tr>
+                <tr>
+                  <td title="Voltage measured on cell 8.">MEAS_CELL8</td>
+                  <td><span id="MEAS_CELL8">0</span></td>
+                  <td>mV</td>
+                </tr>
+                <tr>
+                  <td title="Voltage measured on cell 9.">MEAS_CELL9</td>
+                  <td><span id="MEAS_CELL9">0</span></td>
+                  <td>mV</td>
+                </tr>
+                <tr>
+                  <td title="Voltage measured on cell 10.">MEAS_CELL10</td>
+                  <td><span id="MEAS_CELL10">0</span></td>
+                  <td>mV</td>
+                </tr>
+                <tr>
+                  <td title="Voltage measured on cell 11.">MEAS_CELL11</td>
+                  <td><span id="MEAS_CELL11">0</span></td>
+                  <td>mV</td>
+                </tr>
+                <tr>
+                  <td title="Voltage measured on cell 12.">MEAS_CELL12</td>
+                  <td><span id="MEAS_CELL12">0</span></td>
+                  <td>mV</td>
+                </tr>
+                <tr>
+                  <td title="Voltage measured on cell 13.">MEAS_CELL13</td>
+                  <td><span id="MEAS_CELL13">0</span></td>
+                  <td>mV</td>
+                </tr>
+                <tr>
+                  <td title="Voltage measured on cell 14.">MEAS_CELL14</td>
+                  <td><span id="MEAS_CELL14">0</span></td>
+                  <td>mV</td>
+                </tr>                
+                <tr>
+                  <td title="Temperature measured on GPIO0 in analog input mode for ratiometric measurement. NTC table is used to convert resistance value to temperature.">MEAS_AN0</td>                  
+                  <td><span id="MEAS_AN0">0</span></td>
+                  <td>°C</td>
+                </tr>
+                <tr>
+                  <td title="Temperature measured on GPIO1 in analog input mode for ratiometric measurement. NTC table is used to convert resistance value to temperature.">MEAS_AN1</td>                  
+                  <td><span id="MEAS_AN1">0</span></td>
+                  <td>°C</td>
+                </tr>
+                <tr>
+                  <td title="Temperature measured on GPIO2 in analog input mode for ratiometric measurement. NTC table is used to convert resistance value to temperature.">MEAS_AN2</td>                  
+                  <td><span id="MEAS_AN2">0</span></td>
+                  <td>°C</td>
+                </tr>
+                <tr>
+                  <td title="Temperature measured on GPIO3 in analog input mode for ratiometric measurement. NTC table is used to convert resistance value to temperature.">MEAS_AN3</td>                  
+                  <td><span id="MEAS_AN3">0</span></td>
+                  <td>°C</td>
+                </tr>
+                <tr>
+                  <td title="Temperature measured on GPIO4 in analog input mode for ratiometric measurement. NTC table is used to convert resistance value to temperature.">MEAS_AN4</td>                  
+                  <td><span id="MEAS_AN4">0</span></td>
+                  <td>°C</td>
+                </tr>
+                <tr>
+                  <td title="Temperature measured on GPIO5 in analog input mode for ratiometric measurement. NTC table is used to convert resistance value to temperature.">MEAS_AN5</td>                  
+                  <td><span id="MEAS_AN5">0</span></td>
+                  <td>°C</td>
+                </tr>
+                <tr>
+                  <td title="Temperature measured on GPIO6 in analog input mode for ratiometric measurement. NTC table is used to convert resistance value to temperature.">MEAS_AN6</td>                  
+                  <td><span id="MEAS_AN6">0</span></td>
+                  <td>°C</td>
+                </tr>
+                <tr>
+                  <td title="Internal IC temperature.">MEAS_IC_TEMP</td>                  
+                  <td><span id="MEAS_IC_TEMP">0</span></td>
+                  <td>°C</td>
+                </tr>
+                <tr>
+                  <td title="ADCIA Band Gap Reference measurement.">MEAS_VBG_DIAG_ADC1A</td>
+                  <td><span id="MEAS_VBG_DIAG_ADC1A">0</span></td>
+                  <td>mV</td>
+                </tr>
+                <tr>
+                  <td title="ADCIB Band Gap Reference measurement.">MEAS_VBG_DIAG_ADC1B</td>
+                  <td><span id="MEAS_VBG_DIAG_ADC1B">0</span></td>
+                  <td>mV</td>
+                </tr>
+              </table>
+            </div>
+            <div id="bcc-thresholds">
+              <div class="content-wrapper">
+                <div id="bcc-thresholds-gpiox-otut"></div>
+                <label for="bcc-thresholds-gpiox-otut-amount">ANx [OT:UT] [mV]:</label>
+                <input type="text" id="bcc-thresholds-gpiox-otut-amount" readonly style="border:0; color:#f6931f; font-weight:bold;">            
+              </div>
+              
+              <div class="content-wrapper">
+                <div id="bcc-thresholds-ctx-ovuv"></div>
+                <label for="bcc-thresholds-ctx-ovuv-amount">CTx [UV:OV] [mV]:</label>
+                <input type="text" id="bcc-thresholds-ctx-ovuv-amount" readonly style="border:0; color:#f6931f; font-weight:bold;">            
+              </div>                
+            </div>
+            <div id="bcc-status" class="content-wrapper">
+              <table id="bcc-fault1-status-tab" class="bcc-tab">
+                <tr>
+                  <th colspan="2">FAULT1_STATUS</th>
+                </tr>
+                <tr>
+                  <th>Bit</th>
+                  <th>Error</th>
+                </tr>
+                <tr>
+                  <td title="Cell terminal undervoltage detection.">CT_UV</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="Cell terminal overvoltage detection.">CT_OV</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="Analog inputs undertemperature detection.">AN_UT</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="Analog inputs overtemperature detection.">AN_OT</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="ISENSE overcurrent detected (sleep mode only).">IS_OC</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="ISENSE pins open load detected.">IS_OL</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="I2C communication error during the transfer from EEPROM to HVBMS.">I2C_ERR</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="GPIO0 wake-up notification.">GPIO0_WUP</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="CSB wake-up notification.">CSB_WUP</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="Communication error detected.">COM_ERR</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="Communication loss detected.">COM_LOSS</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="VPWR low-voltage notification.">VPWR_LV</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="VPWR overvoltage notification.">VPWR_OV</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="Overflow indicator on the COM_STATUS[COM_ERR_COUNT].">COM_ERR_OVR</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="Reset indication.">RESET</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="Power On Reset (POR) indication.">POR</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>        
+              </table>
+              <table id="bcc-fault2-status-tab" class="bcc-tab">
+                <tr>
+                  <th colspan="2">FAULT2_STATUS</th>
+                </tr>
+                <tr>
+                  <th>Bit</th>
+                  <th>Error</th>
+                </tr>
+                <tr>
+                  <td title="Error in the loading of fuses.">FUSE_ERR</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="ECC error, Double Error Correction.">DED_ERR</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="Low-power oscillator error.">OSC_ERR</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="Cell balancing open load detection.">CB_OPEN</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="Cell balancing short-circuit detection.">CB_SHORT</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="GPIO short detection.">GPIO_SHORT</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="Analog inputs open load detection.">AN_OPEN</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="IDLE mode notification.">IDLE_MODE</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="IC thermal limitation detected.">IC_TSD</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="Loss of ground has been detected on DGND or AGND or CGND.">GND_LOSS</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="ADC1A fault notification.">ADC1_A_FLT</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="ADC1B fault notification.">ADC1_B_FLT</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="VANA undervoltage notification.">VANA_UV</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="VANA overvoltage notification.">VANA_OV</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="VCOM undervoltage notification.">VCOM_UV</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="VCOM overvoltage notification.">VCOM_OV</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>        
+              </table>
+              <table id="bcc-fault3-status-tab" class="bcc-tab">
+                <tr>
+                  <th colspan="2">FAULT3_STATUS</th>
+                </tr>
+                <tr>
+                  <th>Bit</th>
+                  <th>Error</th>
+                </tr>
+                <tr>
+                  <td title="End of time cell balancing notification. Indicates when a cell balance timer has expired and driver has been shut off.">EOT_CB1</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="End of time cell balancing notification. Indicates when a cell balance timer has expired and driver has been shut off.">EOT_CB2</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="End of time cell balancing notification. Indicates when a cell balance timer has expired and driver has been shut off.">EOT_CB3</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="End of time cell balancing notification. Indicates when a cell balance timer has expired and driver has been shut off.">EOT_CB4</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="End of time cell balancing notification. Indicates when a cell balance timer has expired and driver has been shut off.">EOT_CB5</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="End of time cell balancing notification. Indicates when a cell balance timer has expired and driver has been shut off.">EOT_CB6</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="End of time cell balancing notification. Indicates when a cell balance timer has expired and driver has been shut off.">EOT_CB7</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="End of time cell balancing notification. Indicates when a cell balance timer has expired and driver has been shut off.">EOT_CB8</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="End of time cell balancing notification. Indicates when a cell balance timer has expired and driver has been shut off.">EOT_CB9</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="End of time cell balancing notification. Indicates when a cell balance timer has expired and driver has been shut off.">EOT_CB10</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="End of time cell balancing notification. Indicates when a cell balance timer has expired and driver has been shut off.">EOT_CB11</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="End of time cell balancing notification. Indicates when a cell balance timer has expired and driver has been shut off.">EOT_CB12</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="End of time cell balancing notification. Indicates when a cell balance timer has expired and driver has been shut off.">EOT_CB13</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="End of time cell balancing notification. Indicates when a cell balance timer has expired and driver has been shut off.">EOT_CB14</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="The system has exited itself from diagnostic state after timeout.">DIAG_TO_FLT</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>
+                <tr>
+                  <td title="Overflow indicator on the COULOMB_CNT1,2 or CC_NB_SAMPLES registers.">CC_OVR</td>
+                  <td><img src="images/LED/noneLed.png" alt="" ></td>
+                </tr>        
+              </table>
+            </div>
+          </div>
+        </div> <!-- End of main tabs block. -->
+        <div class="cleaner"></div>
+        
+      </div>  <!-- End of sub-container -->         
+    <!-- end of id="container" -->  
+    </div>             
+  </body>
+</html>
