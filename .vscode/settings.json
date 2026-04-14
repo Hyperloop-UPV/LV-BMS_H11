@@ -35,6 +35,8 @@
     "valarray": "cpp",
     "cstdlib": "cpp",
     "mutex": "cpp",
-    "shared_mutex": "cpp"
+    "shared_mutex": "cpp",
+    "bcc_communication.h": "c",
+    "bcc.h": "c"
   }
 }

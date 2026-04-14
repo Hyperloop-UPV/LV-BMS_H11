@@ -80,12 +80,15 @@ int main(void) {
 
   LV_BMS::operational_led = &lvBMS_Board::instance_of<operational_led_def>();
   LV_BMS::fault_led = &lvBMS_Board::instance_of<fault_led_def>();
+#if LV_BMS_VERSION_MAJOR == 10
   LV_BMS::current_sensor = 
     LinearSensor(lvBMS_Board::instance_of<current_adc_def>(), 
                  10.236f, -0.581f, &LV_BMS::current);
+#endif
   LV_BMS::spi_pins = &lvBMS_Board::instance_of<spi_def>();
-  LV_BMS::spi_wrapper.emplace(*LV_BMS::spi_pins);
-  LV_BMS::spi_cs = &lvBMS_Board::instance_of<spi_cs_def>();
+  ST_LIB::SPIDomain::SPIWrapper<spi_def> spi_wrapper_internal(*LV_BMS::spi_pins);
+  spi_wrapper = &spi_wrapper_internal;
+  spi_cs = &lvBMS_Board::instance_of<spi_cs_def>();
 
   LV_BMS::init();
   LV_BMS::start();

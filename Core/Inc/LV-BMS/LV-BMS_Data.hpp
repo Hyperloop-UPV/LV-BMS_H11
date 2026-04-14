@@ -1,7 +1,6 @@
 #ifndef DATA_HPP
 #define DATA_HPP
 
-#include "BMS.hpp"
 #include "ST-LIB.hpp"
 #include "Communications/Packets/DataPackets.hpp"
 

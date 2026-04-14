@@ -26,10 +26,14 @@ inline constexpr ST_LIB::DigitalOutputDomain::DigitalOutput fault_led_def{ST_LIB
 // ADC
 //////////////////////////////////////////////////////////
 
+#if LV_BMS_VERSION_MAJOR == 10
+
 static float adc_current_def;
 inline constexpr ST_LIB::ADCDomain::ADC current_adc_def(
   ST_LIB::CURRENT_SENSOR, adc_current_def
 );
+
+#endif
 
 //////////////////////////////////////////////////////////
 // SPI
@@ -85,8 +89,10 @@ using lvBMS_Board = ST_LIB::Board<
     timer_us_tick_def, 
     //pg12_led_def,
     operational_led_def, 
-    fault_led_def, 
+    fault_led_def,
+#if LV_BMS_VERSION_MAJOR == 10
     current_adc_def,
+#endif
     spi_def,
     spi_cs_def>;
 

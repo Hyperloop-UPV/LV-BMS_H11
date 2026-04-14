@@ -1,22 +1,29 @@
+#define BCC_STLIB_IMPLEMENTATION
 #include "LV-BMS/LV-BMS.hpp"
+#include "float.h"
 
+ST_LIB::DigitalOutputDomain::Instance *spi_cs;
+ST_LIB::SPIDomain::SPIWrapper<spi_def> *spi_wrapper;
+
+#if LV_BMS_VERSION_MAJOR == 10
 void LV_BMS::BMSConfig::SPI_transmit(const span<uint8_t> data) {
-  LV_BMS::spi_wrapper->send(data);
+  spi_wrapper->send(data);
 }
 void LV_BMS::BMSConfig::SPI_receive(span<uint8_t> buffer) {
-  LV_BMS::spi_wrapper->receive(buffer);
+  spi_wrapper->receive(buffer);
 }
 
 void LV_BMS::BMSConfig::SPI_CS_turn_off() {
-  LV_BMS::spi_cs->turn_off();
+  spi_cs->turn_off();
 }
 void LV_BMS::BMSConfig::SPI_CS_turn_on() {
-  LV_BMS::spi_cs->turn_on();
+  spi_cs->turn_on();
 }
 
 int32_t LV_BMS::BMSConfig::get_tick() {
   return GetMicroseconds();
 }
+#endif
 
 //---------------------------------------------------------------
 
@@ -42,9 +49,11 @@ void LV_BMS::init() {
   OrderPackets::Brake_init();
   OrderPackets::start();
 
+#if LV_BMS_VERSION_MAJOR == 10
   Scheduler::register_task((READING_PERIOD_US / 2) - 100, []() {
     bms.update();
   });
+#endif
 
   ProtectionManager::link_state_machine(LV_BMS::BMS_State_Machine,
                                         static_cast<uint8_t>(BMS_State::FAULT));
@@ -132,13 +141,29 @@ void LV_BMS::update_SOC() {
 //------------------------------------------------
 
 void LV_BMS::get_max_min_cells() {
-  max_cell = *std::max_element(battery[0].cells.begin(), battery[0].cells.end());
-  min_cell = *std::min_element(battery[0].cells.begin(), battery[0].cells.end());
+  float maximum = FLT_MIN;
+  float minimum = FLT_MIN;
+  for(unsigned int i = 0; i < ARRAY_LENGTH(LV_BMS::battery[0].cells); i++) {
+    float v = LV_BMS::battery[0].cells[i];
+    maximum = std::max(v, maximum);
+    minimum = std::min(v, minimum);
+  }
+
+  max_cell = maximum;
+  min_cell = minimum;
 }
 
 void LV_BMS::get_max_min_temperatures() {
-  max_temperature = *std::max_element(temperature.begin(), temperature.end());
-  min_temperature = *std::min_element(temperature.begin(), temperature.end());
+  float maximum = FLT_MIN;
+  float minimum = FLT_MIN;
+  for(unsigned int i = 0; i < ARRAY_LENGTH(LV_BMS::temperature); i++) {
+    float v = LV_BMS::temperature[i];
+    maximum = std::max(v, maximum);
+    minimum = std::min(v, minimum);
+  }
+
+  max_temperature = maximum;
+  min_temperature = minimum;
 }
 
 void LV_BMS::read_temperature(const float voltage, float* temperature) {
@@ -149,12 +174,16 @@ void LV_BMS::read_temperature(const float voltage, float* temperature) {
 
 void LV_BMS::read() {
   get_max_min_cells();
-  current_sensor.read();
+#if LV_BMS_VERSION_MAJOR == 10
   update_SOC();
+  current_sensor.read();
   read_temperature(GPIO_voltage_1, &temperature[0]);
   read_temperature(GPIO_voltage_2, &temperature[1]);
   read_temperature(GPIO_voltage_3, &temperature[2]);
   read_temperature(GPIO_voltage_4, &temperature[3]);
+#else
+  update_SOC();
+#endif
   get_max_min_temperatures();
 }
 

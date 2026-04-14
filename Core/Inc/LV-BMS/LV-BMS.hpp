@@ -20,6 +20,8 @@
 using BMS_State = DataPackets::State;
 
 extern TIM_TypeDef* global_tick_timer;
+extern ST_LIB::DigitalOutputDomain::Instance *spi_cs;
+extern ST_LIB::SPIDomain::SPIWrapper<spi_def> *spi_wrapper;
 
 #define GetMicroseconds() global_tick_timer->CNT
 
@@ -27,8 +29,6 @@ struct LV_BMS {
   static inline ST_LIB::DigitalOutputDomain::Instance *operational_led;
   static inline ST_LIB::DigitalOutputDomain::Instance *fault_led;
   static inline ST_LIB::SPIDomain::Instance *spi_pins;
-  static inline ST_LIB::DigitalOutputDomain::Instance *spi_cs;
-  static inline std::optional<ST_LIB::SPIDomain::SPIWrapper<spi_def>> spi_wrapper;
 
   static inline BMS_State state{};
 
@@ -73,7 +73,27 @@ struct LV_BMS {
 
   static inline float &conv_rate{battery[0].conv_rate};
 #elif LV_BMS_VERSION_MAJOR == 11
-  // TODO
+  struct BatteryData {
+    float cells[6];
+  };
+
+  static inline float SOC{};
+
+  static inline float current{};
+
+  static inline float min_cell{};
+  static inline float max_cell{};
+
+  static inline float total_voltage{};
+
+  static inline float min_temperature{};
+  static inline float max_temperature{};
+
+  static inline BatteryData battery[1]{};
+  static inline float temperature[4]{};
+
+  // NOTE: For coulomb counting SOC (do I need this or does the library give me it?)
+  static inline uint32_t last_reading_time{};
 #endif
 
   //////////////////////////////////////

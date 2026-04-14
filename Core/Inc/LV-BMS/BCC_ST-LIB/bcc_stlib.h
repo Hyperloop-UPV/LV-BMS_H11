@@ -1,9 +1,18 @@
 #ifndef BCC_STLIB_H
 #define BCC_STLIB_H
 
-#include "ST-LIB.hpp"
+#include "../LV-BMS_Domains.hpp"
 
 #include "../../../../deps/BCC_SW_Driver/bcc/bcc.h"
+
+extern TIM_TypeDef* global_tick_timer;
+extern TIM_TypeDef* timeout_timer; // This one must be 32 bits
+extern ST_LIB::DigitalOutputDomain::Instance *spi_cs;
+extern ST_LIB::SPIDomain::SPIWrapper<spi_def> *spi_wrapper;
+
+inline bool bcc_exceeded_timeout = false;
+
+void timeout_timer_callback(void *rawinfo);
 
 /*!
  * @brief Returns SCG system clock frequency.
@@ -74,7 +83,7 @@ bcc_status_t BCC_MCU_TransferTpl(const uint8_t drvInstance, uint8_t txBuf[],
 #define BCC_MCU_Assert(expr) \
   do { \
     if(!(expr)) { \
-      ErrorHandler(glue("BCC assert fail: ", stringify(expr))); \
+      ErrorHandler("BCC assert fail: " stringify(expr)); \
     } \
   } while(0)
 
@@ -100,6 +109,12 @@ void BCC_MCU_WriteEnPin(const uint8_t drvInstance, const uint8_t value);
 uint32_t BCC_MCU_ReadIntbPin(const uint8_t drvInstance);
 
 #ifdef BCC_STLIB_IMPLEMENTATION
+void timeout_timer_callback(void *rawinfo)
+{
+  (void)rawinfo;
+  bcc_exceeded_timeout = true;
+}
+
 uint32_t BCC_MCU_GetSystemClockFreq(void)
 {
   return SystemCoreClock;
@@ -107,28 +122,47 @@ uint32_t BCC_MCU_GetSystemClockFreq(void)
 
 void BCC_MCU_WaitSec(uint16_t delay)
 {
-  HAL_Delay((uint32_t)delay * 1000UL);
+  uint32_t total = delay * 1000;
+  uint32_t i = 0;
+  for(; i < total; i += UINT16_MAX) {
+    BCC_MCU_WaitMs(i);
+  }
+  BCC_MCU_WaitMs(i - total);
 }
 
 void BCC_MCU_WaitMs(uint16_t delay)
 {
-  HAL_Delay((uint32_t)delay);
+  // NOTE: Assume the counter for the timer has started
+  // NOTE: This also assumes the timer is counting in microseconds per CNT step
+  BCC_MCU_Assert((global_tick_timer->CR1 & TIM_CR1_CEN) != 0);
+  BCC_MCU_WaitUs((uint32_t)delay * 1000UL);
 }
 
 void BCC_MCU_WaitUs(uint32_t delay)
 {
-  // TODO: Use timer
+  // NOTE: Assume the counter for the timer has started
+  // NOTE: This also assumes the timer is counting in microseconds per CNT step
+  // BCC_MCU_Assert((global_tick_timer->CR1 & TIM_CR1_CEN) != 0);
+  uint32_t start = global_tick_timer->CNT;
+  uint32_t end = start + delay;
+  if(start > end) [[unlikely]] {
+    while(global_tick_timer->CNT > end) /* wait */;
+  }
+  while(global_tick_timer->CNT < end) /* wait */;
 }
-
 
 bcc_status_t BCC_MCU_StartTimeout(uint32_t timeoutUs)
 {
-  // TODO: Use dedicated timer ?
+  bcc_exceeded_timeout = false;
+  timeout_timer->CNT = 0;
+  timeout_timer->ARR = timeoutUs;
+  SET_BIT(timeout_timer->CR1, TIM_CR1_CEN);
+  return BCC_STATUS_SUCCESS;
 }
 
 bool BCC_MCU_TimeoutExpired(void)
 {
-  // TODO
+  return bcc_exceeded_timeout;
 }
 
 bcc_status_t BCC_MCU_TransferSpi(const uint8_t drvInstance, uint8_t txBuf[], uint8_t rxBuf[])
@@ -136,8 +170,8 @@ bcc_status_t BCC_MCU_TransferSpi(const uint8_t drvInstance, uint8_t txBuf[], uin
   BCC_MCU_Assert(txBuf != NULL);
   BCC_MCU_Assert(rxBuf != NULL);
 
-  bool ok = SPI.template transceive<uint8_t[BCC_MSG_SIZE], uint8_t[BCC_MSG_SIZE]>(txBuf, rxBuf);
-
+  bool ok = spi_wrapper->template transceive(txBuf, rxBuf, BCC_MSG_SIZE);
+  // bool ok = spi_wrapper->transceive(txBuf, rxBuf, BCC_MSG_SIZE);
   return ok ? BCC_STATUS_SUCCESS : BCC_STATUS_SPI_FAIL;
 }
 
@@ -147,6 +181,23 @@ bcc_status_t BCC_MCU_TransferTpl(const uint8_t drvInstance, uint8_t txBuf[],
   return BCC_STATUS_SPI_FAIL;
 }
 
+void BCC_MCU_WriteCsbPin(const uint8_t drvInstance, const uint8_t value)
+{
+  if(value) {
+    spi_cs->turn_on();
+  } else {
+    spi_cs->turn_off();
+  }
+}
+
+void BCC_MCU_WriteRstPin(const uint8_t drvInstance, const uint8_t value)
+{
+  // NOTE: this should actually be handled in hv bms (@Jorge_Canut)
+  if(value != 0) {
+    BCC_MCU_Assert(false && !"LV BMS Reset pin requested");
+  }
+}
+
 void BCC_MCU_WriteEnPin(const uint8_t drvInstance, const uint8_t value)
 {
   BCC_MCU_Assert(false && !"Used tpl function when using spi");
@@ -154,6 +205,7 @@ void BCC_MCU_WriteEnPin(const uint8_t drvInstance, const uint8_t value)
 
 uint32_t BCC_MCU_ReadIntbPin(const uint8_t drvInstance)
 {
+  //BCC_MCU_Assert(false && !"Used tpl function when using spi");
   return 0;
 }
 
