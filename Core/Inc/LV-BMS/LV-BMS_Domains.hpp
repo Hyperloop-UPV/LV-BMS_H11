@@ -19,6 +19,9 @@ inline constexpr ST_LIB::TimerDomain::Timer timer_us_tick_def{{
 inline constexpr ST_LIB::DigitalOutputDomain::DigitalOutput operational_led_def{ST_LIB::LED_OPERATIONAL};
 inline constexpr ST_LIB::DigitalOutputDomain::DigitalOutput fault_led_def{ST_LIB::LED_FAULT};
 
+// Used to test LVBMS-H11 board
+//inline constexpr ST_LIB::DigitalOutputDomain::DigitalOutput pg12_led_def{ST_LIB::PG12};
+
 //////////////////////////////////////////////////////////
 // ADC
 //////////////////////////////////////////////////////////
@@ -80,6 +83,7 @@ using lvBMS_Board = ST_LIB::Board<
     eth, 
 #endif
     timer_us_tick_def, 
+    //pg12_led_def,
     operational_led_def, 
     fault_led_def, 
     current_adc_def,

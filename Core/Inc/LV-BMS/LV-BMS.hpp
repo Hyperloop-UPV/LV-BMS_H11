@@ -7,7 +7,13 @@
 #include "LV-BMS_Pinout.hpp"
 #include "LV-BMS_Domains.hpp"
 
+#if LV_BMS_VERSION_MAJOR == 10
 #include "BMS.hpp"
+#elif LV_BMS_VERSION_MAJOR == 11
+#include "../../deps/BCC_SW_Driver/bcc/bcc.h"
+
+#include "../../deps/BCC_SW_Driver/bcc/bcc.c"
+#endif
 //#include "DCLV/DCLV.hpp"
 
 #include "Communications/Packets/DataPackets.hpp"
@@ -29,6 +35,7 @@ struct LV_BMS {
   static inline BMS_State state{};
 
   //--------------- BMS CONFIG FOR LTC6810-DRIVER ----------------
+#if LV_BMS_VERSION_MAJOR == 10
   struct BMSConfig {
     static inline uint8_t spi_id{};
     static constexpr size_t n_LTC6810{1};
@@ -67,6 +74,9 @@ struct LV_BMS {
   static inline float &GPIO_voltage_4{battery[0].GPIOs[3]};
 
   static inline float &conv_rate{battery[0].conv_rate};
+#elif LV_BMS_VERSION_MAJOR == 11
+  // TODO
+#endif
 
   //////////////////////////////////////
 
@@ -116,6 +126,10 @@ struct LV_BMS {
     //////////////////////////////////////////////
     // Enter/Exit actions
 
+    // BMS_State::CONNECTING
+
+
+    // BMS_State::OPERATIONAL
     sm.add_enter_action([]() {
       LV_BMS::operational_led->turn_on();
     }, operational_state);
@@ -124,12 +138,12 @@ struct LV_BMS {
       LV_BMS::operational_led->turn_off();
     }, operational_state);
 
-
+    // BMS_State::FAULT
     sm.add_enter_action([]() {
       LV_BMS::fault_led->turn_on();
     }, fault_state);
 
-    sm.add_enter_action([]() {
+    sm.add_exit_action([]() {
       LV_BMS::fault_led->turn_off();
     }, fault_state);
 
@@ -138,42 +152,12 @@ struct LV_BMS {
 
     // BMS_State::CONNECTING
     sm.add_cyclic_action([]() {
-      read();
-    }, std::chrono::milliseconds(100), connecting_state);
-
-    sm.add_cyclic_action([]() {
       LV_BMS::operational_led->toggle();
     }, std::chrono::milliseconds(300), connecting_state);
 
-    //sm.add_cyclic_action([]() {
-    //  DCLV::read_sensors();
-    //}, std::chrono::milliseconds(100), connecting_state);
-
     // BMS_State::OPERATIONAL
-    sm.add_cyclic_action([]() {
-      read();
-    }, std::chrono::milliseconds(100), operational_state);
-
-    //sm.add_cyclic_action([]() {
-    //  DCLV::read_sensors();
-    //}, std::chrono::milliseconds(100), operational_state);
-
-    sm.add_cyclic_action([]() {
-      ProtectionManager::check_protections();
-    }, std::chrono::milliseconds(100), operational_state);
 
     // BMS_State::FAULT
-    sm.add_cyclic_action([]() {
-      read();
-    }, std::chrono::milliseconds(100), fault_state);
-
-    //sm.add_cyclic_action([]() {
-    //  DCLV::read_sensors();
-    //}, std::chrono::milliseconds(100), fault_state);
-
-    sm.add_cyclic_action([]() {
-      ProtectionManager::check_protections();
-    }, std::chrono::milliseconds(100), fault_state);
 
     return sm;
   }();

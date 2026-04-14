@@ -5,6 +5,16 @@
 #include "ST-LIB.hpp"
 #include "Communications/Packets/DataPackets.hpp"
 
+#ifndef glue
+#define glue_(a,b) a##b
+#define glue(a,b) glue_(a,b)
+#endif
+
+#ifndef stringify
+#define stringify_(x) #x
+#define stringify(x) stringify_(x)
+#endif
+
 #define N_BATTERIES 1
 #define READING_PERIOD_US 25000
 #define CAPACITY_AH 20.0f
@@ -14,6 +24,22 @@
 #define VOLTAGE_REFERENCE 3.0        // V
 #define R0 100.0                     // Ohm
 #define TCR 0.00385
+
+#if !defined(LV_BMS_VERSION_MAJOR)
+#if defined(USE_H11_CODE)
+#define LV_BMS_VERSION_MAJOR 11
+#else
+#if defined(USE_PHY_KSZ8041)
+#define LV_BMS_VERSION_MAJOR 11
+#elif defined(USE_PHY_LAN8742) || defined(USE_PHY_LAN8700)
+#define LV_BMS_VERSION_MAJOR 10
+#else
+#error Could not get LV_BMS version automatically from PHY used
+#endif
+#endif
+#endif
+
+#define LV_BMS_VERSION_CSTR glue("H", stringify(LV_BMS_VERSION_MAJOR))
 
 // network
 #define LVBMS_MAC_ADDRESS "00:00:00:00:01:FE"
