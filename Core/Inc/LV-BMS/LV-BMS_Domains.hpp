@@ -12,6 +12,10 @@ inline constexpr ST_LIB::TimerDomain::Timer timer_us_tick_def{{
   .request = ST_LIB::TimerRequest::Any32bit,
 }};
 
+inline constexpr ST_LIB::TimerDomain::Timer timeout_timer_def{{
+  .request = ST_LIB::TimerRequest::Any32bit,
+}};
+
 //////////////////////////////////////////////////////////
 // LEDs
 //////////////////////////////////////////////////////////
@@ -92,6 +96,8 @@ using lvBMS_Board = ST_LIB::Board<
     fault_led_def,
 #if LV_BMS_VERSION_MAJOR == 10
     current_adc_def,
+#elif LV_BMS_VERSION_MAJOR == 11
+    timeout_timer_def,
 #endif
     spi_def,
     spi_cs_def>;

@@ -66,6 +66,7 @@ int main(void) {
   auto eth_instance = &lvBMS_Board::instance_of<eth>();
 #endif
 
+  // setup global tick timer
   auto global_tick_timer_wrapper = get_timer_instance(lvBMS_Board, timer_us_tick_def);
   static_assert(global_tick_timer_wrapper.is_32bit_instance);
   global_tick_timer_wrapper.set_prescaler(global_tick_timer_wrapper.get_clock_frequency()/1'000'000);
@@ -73,10 +74,13 @@ int main(void) {
   global_tick_timer->ARR = UINT32_MAX;
   global_tick_timer_wrapper.counter_enable();
 
-  // Used to test LVBMS-H11 board
-  //ST_LIB::DigitalOutputDomain::Instance *pg12_led = &lvBMS_Board::instance_of<pg12_led_def>();
-  //pg12_led->turn_on();
-  //for(;;);
+#if LV_BMS_VERSION_MAJOR == 11
+  // setup timeout timer
+  auto timeout_timer_wrapper = get_timer_instance(lvBMS_Board, timeout_timer_def);
+  static_assert(timeout_timer_wrapper.is_32bit_instance);
+  ST_LIB::TimerDomain::callbacks[timeout_timer_wrapper.instance->timer_idx] = timeout_timer_callback;
+  timeout_timer_wrapper.set_prescaler(timeout_timer_wrapper.get_clock_frequency()/1'000'000);
+#endif
 
   LV_BMS::operational_led = &lvBMS_Board::instance_of<operational_led_def>();
   LV_BMS::fault_led = &lvBMS_Board::instance_of<fault_led_def>();
