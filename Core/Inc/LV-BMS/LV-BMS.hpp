@@ -10,9 +10,7 @@
 #if LV_BMS_VERSION_MAJOR == 10
 #include "BMS.hpp"
 #elif LV_BMS_VERSION_MAJOR == 11
-#include "../../deps/BCC_SW_Driver/bcc/bcc.h"
-
-#include "../../deps/BCC_SW_Driver/bcc/bcc.c"
+#include "BCC_ST-LIB/bcc_stlib.h"
 #endif
 //#include "DCLV/DCLV.hpp"
 
