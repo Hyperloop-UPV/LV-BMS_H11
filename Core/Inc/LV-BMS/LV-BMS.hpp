@@ -73,6 +73,8 @@ struct LV_BMS {
 
   static inline float &conv_rate{battery[0].conv_rate};
 #elif LV_BMS_VERSION_MAJOR == 11
+  static inline bcc_drv_config_t bcc_config{};
+
   struct BatteryData {
     float cells[6];
   };

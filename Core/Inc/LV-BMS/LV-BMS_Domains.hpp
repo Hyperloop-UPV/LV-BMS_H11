@@ -56,7 +56,7 @@ static consteval ST_LIB::SPIDomain::SPIConfig get_spi_config() {
   return conf;
 }
 
-inline constexpr auto spi_def = 
+inline constexpr auto spi_def =
   ST_LIB::SPIDomain::Device<ST_LIB::DMA_Domain::Stream::dma1_stream5, 
                             ST_LIB::DMA_Domain::Stream::dma1_stream6>(
     ST_LIB::SPIDomain::SPIMode::MASTER, 

@@ -23,6 +23,56 @@ void LV_BMS::BMSConfig::SPI_CS_turn_on() {
 int32_t LV_BMS::BMSConfig::get_tick() {
   return GetMicroseconds();
 }
+#elif LV_BMS_VERSION_MAJOR == 11
+
+bcc_status_t Init_BCC_Registers()
+{
+  bcc_status_t status;
+
+  for(uint8_t cid = 1; cid <= LV_BMS::bcc_config.devicesCnt; cid++) {
+    for(uint8_t i = 0; i < (uint8_t)ARRAY_LENGTH(bcc_init_regs); i++) {
+      if(bcc_init_regs[i].value != bcc_init_regs[i].defaultVal) {
+        status = BCC_Reg_Write(&LV_BMS::bcc_config, (bcc_cid_t)cid,
+                    bcc_init_regs[i].address, bcc_init_regs[i].value);
+        if(status != BCC_STATUS_SUCCESS) {
+          return status;
+        }
+      }
+    }
+  }
+
+  return BCC_STATUS_SUCCESS;
+}
+
+bcc_status_t Clear_BCC_FaultRegisters()
+{
+  // TODO
+  return BCC_STATUS_SUCCESS;
+}
+
+void Init_BCC_Driver()
+{
+  LV_BMS::bcc_config.drvInstance = 0U;
+  LV_BMS::bcc_config.commMode = BCC_MODE_SPI;
+  LV_BMS::bcc_config.devicesCnt = 1U;
+  LV_BMS::bcc_config.device[0] = BCC_DEVICE_MC33772C;
+  LV_BMS::bcc_config.cellCnt[0] = 6U;
+  bcc_status_t status = BCC_Init(&LV_BMS::bcc_config);
+  if(status != BCC_STATUS_SUCCESS) {
+    ErrorHandler("Could not init BCC: %u", status);
+  }
+
+  status = Init_BCC_Registers();
+  if(status != BCC_STATUS_SUCCESS) {
+    ErrorHandler("Could not init BCC registers: %u", status);
+  }
+
+  status = Clear_BCC_FaultRegisters();
+  if(status != BCC_STATUS_SUCCESS) {
+    ErrorHandler("Could not clear BCC fault registers: %u", status);
+  }
+}
+
 #endif
 
 //---------------------------------------------------------------
