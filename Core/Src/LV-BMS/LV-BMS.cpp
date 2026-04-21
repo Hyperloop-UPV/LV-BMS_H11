@@ -59,17 +59,22 @@ void Init_BCC_Driver()
   LV_BMS::bcc_config.cellCnt[0] = 6U;
   bcc_status_t status = BCC_Init(&LV_BMS::bcc_config);
   if(status != BCC_STATUS_SUCCESS) {
-    ErrorHandler("Could not init BCC: %u", status);
+    ErrorHandler("Could not init BCC: %s", get_bcc_error_str(status));
+    return;
   }
 
   status = Init_BCC_Registers();
   if(status != BCC_STATUS_SUCCESS) {
-    ErrorHandler("Could not init BCC registers: %u", status);
+    ErrorHandler("Could not init BCC registers: %s", 
+                 get_bcc_error_str(status));
+    return;
   }
 
   status = Clear_BCC_FaultRegisters();
   if(status != BCC_STATUS_SUCCESS) {
-    ErrorHandler("Could not clear BCC fault registers: %u", status);
+    ErrorHandler("Could not clear BCC fault registers: %s", 
+                 get_bcc_error_str(status));
+    return;
   }
 }
 
@@ -103,6 +108,8 @@ void LV_BMS::init() {
   Scheduler::register_task((READING_PERIOD_US / 2) - 100, []() {
     bms.update();
   });
+#elif LV_BMS_VERSION_MAJOR == 11
+  Init_BCC_Driver();
 #endif
 
   ProtectionManager::link_state_machine(LV_BMS::BMS_State_Machine,

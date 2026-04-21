@@ -385,8 +385,8 @@ typedef enum
 typedef enum
 {
     BCC_TEMP_KELVIN         = 0U,   /*!< Result resolution: 0.1 K. */
-    BCC_TEMP_CELSIUS        = 1U,   /*!< Result resolution: 0.1 °C. */
-    BCC_TEMP_FAHRENHEIT     = 2U    /*!< Result resolution: 0.1 °F. */
+    BCC_TEMP_CELSIUS        = 1U,   /*!< Result resolution: 0.1 ï¿½C. */
+    BCC_TEMP_FAHRENHEIT     = 2U    /*!< Result resolution: 0.1 ï¿½F. */
 } bcc_temp_unit_t;
 /*! @} */
 
