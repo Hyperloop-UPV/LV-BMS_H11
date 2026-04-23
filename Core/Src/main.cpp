@@ -69,7 +69,10 @@ int main(void) {
   // setup global tick timer
   auto global_tick_timer_wrapper = get_timer_instance(lvBMS_Board, timer_us_tick_def);
   static_assert(global_tick_timer_wrapper.is_32bit_instance);
-  global_tick_timer_wrapper.set_prescaler(global_tick_timer_wrapper.get_clock_frequency()/1'000'000);
+  {
+    uint16_t tick_psc = (uint16_t)(global_tick_timer_wrapper.get_clock_frequency()/1'000'000);
+    global_tick_timer_wrapper.set_prescaler(tick_psc - 1);
+  }
   global_tick_timer = global_tick_timer_wrapper.instance->tim;
   global_tick_timer->ARR = UINT32_MAX;
   global_tick_timer_wrapper.counter_enable();
