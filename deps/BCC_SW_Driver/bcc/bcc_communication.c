@@ -155,7 +155,7 @@ static const uint8_t s_crcTable[BCC_CRC_TBL_SIZE] = {
  *
  * @return Computed CRC value.
  */
-static inline uint8_t BCC_CalcCRC(const uint8_t* const data);
+static inline uint8_t BCC_CalcCRC(const volatile uint8_t* const data);
 
 /*!
  * @brief This function calculates CRC of a received frame and compares
@@ -165,7 +165,7 @@ static inline uint8_t BCC_CalcCRC(const uint8_t* const data);
  *
  * @return bcc_status_t Error code.
  */
-static bcc_status_t BCC_CheckCRC(const uint8_t* const resp);
+static bcc_status_t BCC_CheckCRC(const volatile uint8_t* const resp);
 
 /*!
  * @brief This function checks value of the Message counter field of a frame.
@@ -181,7 +181,7 @@ static bcc_status_t BCC_CheckCRC(const uint8_t* const resp);
  * @return bcc_status_t Error code.
  */
 static bcc_status_t BCC_CheckMsgCntr(bcc_drv_config_t* const drvConfig,
-    const bcc_cid_t cid, const uint8_t* const resp);
+    const bcc_cid_t cid, const volatile uint8_t* const resp);
 
 /*!
  * @brief This function checks content of the received echo frame. It should be
@@ -193,7 +193,7 @@ static bcc_status_t BCC_CheckMsgCntr(bcc_drv_config_t* const drvConfig,
  *
  * @return bcc_status_t Error code.
  */
-static bcc_status_t BCC_CheckEchoFrame(const uint8_t* const txBuf,
+static bcc_status_t BCC_CheckEchoFrame(const volatile uint8_t* const txBuf,
     const uint8_t* const resp);
 
 /*!
@@ -213,7 +213,7 @@ static bcc_status_t BCC_CheckEchoFrame(const uint8_t* const txBuf,
  *               the array according to BCC_MSG_IDX_* macros.
  */
 static void BCC_PackFrame(const uint16_t data, const uint8_t addr,
-    const bcc_cid_t cid, const uint8_t cmdCnt, uint8_t* const frame);
+    const bcc_cid_t cid, const uint8_t cmdCnt, volatile uint8_t* const frame);
 
 /*******************************************************************************
  * Internal function
@@ -225,7 +225,7 @@ static void BCC_PackFrame(const uint16_t data, const uint8_t addr,
  * Description   : This function calculates CRC value of passed data array.
  *
  *END**************************************************************************/
-static inline uint8_t BCC_CalcCRC(const uint8_t* const data)
+static inline uint8_t BCC_CalcCRC(const volatile uint8_t* const data)
 {
     uint8_t crc;      /* Result. */
     uint8_t tableIdx; /* Index to the CRC table. */
@@ -256,7 +256,7 @@ static inline uint8_t BCC_CalcCRC(const uint8_t* const data)
  *                 it with CRC field of the frame.
  *
  *END**************************************************************************/
-static bcc_status_t BCC_CheckCRC(const uint8_t* const resp)
+static bcc_status_t BCC_CheckCRC(const volatile uint8_t* const resp)
 {
     uint8_t frameCrc;  /* CRC value from the response frame. */
     uint8_t compCrc;   /* Computed (expected) CRC value. */
@@ -277,7 +277,7 @@ static bcc_status_t BCC_CheckCRC(const uint8_t* const resp)
  *
  *END**************************************************************************/
 static bcc_status_t BCC_CheckMsgCntr(bcc_drv_config_t* const drvConfig,
-    const bcc_cid_t cid, const uint8_t* const resp)
+    const bcc_cid_t cid, const volatile uint8_t* const resp)
 {
     uint8_t msgCntPrev;  /* Previously received message counter value. */
     uint8_t msgCntRcv;   /* Currently received message counter value. */
@@ -307,7 +307,7 @@ static bcc_status_t BCC_CheckMsgCntr(bcc_drv_config_t* const drvConfig,
  * Description   : This function checks content of the echo frame.
  *
  *END**************************************************************************/
-static bcc_status_t BCC_CheckEchoFrame(const uint8_t* const txBuf,
+static bcc_status_t BCC_CheckEchoFrame(const volatile uint8_t* const txBuf,
     const uint8_t* const resp)
 {
     BCC_MCU_Assert(resp != NULL);
@@ -336,7 +336,7 @@ static bcc_status_t BCC_CheckEchoFrame(const uint8_t* const txBuf,
  *
  *END**************************************************************************/
 static void BCC_PackFrame(const uint16_t data, const uint8_t addr,
-    const bcc_cid_t cid, const uint8_t cmdCnt, uint8_t* const frame)
+    const bcc_cid_t cid, const uint8_t cmdCnt, volatile uint8_t* const frame)
 {
     BCC_MCU_Assert(frame != NULL);
 
@@ -372,7 +372,7 @@ bcc_status_t BCC_Reg_ReadTpl(bcc_drv_config_t* const drvConfig,
     const bcc_cid_t cid, const uint8_t regAddr, const uint8_t regCnt,
     uint16_t* regVal)
 {
-    uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
+    volatile uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
     uint8_t *rxBuf;              /* Pointer to received data. */
     uint8_t regIdx;              /* Index of a received register. */
     bcc_status_t status;
@@ -440,8 +440,8 @@ bcc_status_t BCC_Reg_ReadSpi(bcc_drv_config_t* const drvConfig,
     const bcc_cid_t cid, uint8_t regAddr, const uint8_t regCnt,
     uint16_t* regVal)
 {
-    uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
-    uint8_t rxBuf[BCC_MSG_SIZE]; /* Buffer for receiving. */
+    static D1_NC uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
+    static D1_NC uint8_t rxBuf[BCC_MSG_SIZE]; /* Buffer for receiving. */
     uint8_t regIdx;              /* Index of a received register. */
     bcc_status_t status;
 
@@ -534,7 +534,7 @@ bcc_status_t BCC_Reg_ReadSpi(bcc_drv_config_t* const drvConfig,
 bcc_status_t BCC_Reg_WriteTpl(bcc_drv_config_t* const drvConfig,
     const bcc_cid_t cid, const uint8_t regAddr, const uint16_t regVal)
 {
-    uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
+    static D1_NC uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
     bcc_status_t status;
 
     BCC_MCU_Assert(drvConfig != NULL);
@@ -567,8 +567,8 @@ bcc_status_t BCC_Reg_WriteTpl(bcc_drv_config_t* const drvConfig,
 bcc_status_t BCC_Reg_WriteSpi(bcc_drv_config_t* const drvConfig,
     const bcc_cid_t cid, const uint8_t regAddr, const uint16_t regVal)
 {
-    uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
-    uint8_t rxBuf[BCC_MSG_SIZE]; /* Buffer for receiving. */
+    static D1_NC uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
+    static D1_NC uint8_t rxBuf[BCC_MSG_SIZE]; /* Buffer for receiving. */
     bcc_status_t status;
 
     BCC_MCU_Assert(drvConfig != NULL);
@@ -619,7 +619,7 @@ bcc_status_t BCC_Reg_WriteSpi(bcc_drv_config_t* const drvConfig,
 bcc_status_t BCC_Reg_WriteGlobalTpl(bcc_drv_config_t* const drvConfig,
     const uint8_t regAddr, const uint16_t regVal)
 {
-    uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
+    static D1_NC uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
     bcc_status_t status;
 
     BCC_MCU_Assert(drvConfig != NULL);
@@ -653,7 +653,7 @@ bcc_status_t BCC_Reg_WriteGlobalTpl(bcc_drv_config_t* const drvConfig,
 bcc_status_t BCC_SendNopTpl(bcc_drv_config_t* const drvConfig,
     const bcc_cid_t cid)
 {
-    uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
+    static D1_NC uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
     bcc_status_t status;
 
     BCC_MCU_Assert(drvConfig != NULL);
@@ -688,8 +688,8 @@ bcc_status_t BCC_SendNopTpl(bcc_drv_config_t* const drvConfig,
 bcc_status_t BCC_SendNopSpi(bcc_drv_config_t* const drvConfig,
     const bcc_cid_t cid)
 {
-    uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
-    uint8_t rxBuf[BCC_MSG_SIZE]; /* Buffer for receiving. */
+    static D1_NC uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
+    static D1_NC uint8_t rxBuf[BCC_MSG_SIZE]; /* Buffer for receiving. */
     bcc_status_t status;
 
     BCC_MCU_Assert(drvConfig != NULL);

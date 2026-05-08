@@ -99,7 +99,7 @@ bool BCC_MCU_TimeoutExpired(void);
   *
   * @return bcc_status_t Error code.
   */
-bcc_status_t BCC_MCU_TransferSpi(const uint8_t drvInstance, uint8_t txBuf[], uint8_t rxBuf[]);
+bcc_status_t BCC_MCU_TransferSpi(const uint8_t drvInstance, volatile uint8_t txBuf[], volatile uint8_t rxBuf[]);
 
 // NOTE: Unused since we don't use Tpl
 bcc_status_t BCC_MCU_TransferTpl(const uint8_t drvInstance, uint8_t txBuf[],
@@ -224,7 +224,7 @@ bool BCC_MCU_TimeoutExpired(void)
   return bcc_exceeded_timeout;
 }
 
-bcc_status_t BCC_MCU_TransferSpi(const uint8_t drvInstance, uint8_t txBuf[], uint8_t rxBuf[])
+bcc_status_t BCC_MCU_TransferSpi(const uint8_t drvInstance, volatile uint8_t txBuf[], volatile uint8_t rxBuf[])
 {
   BCC_MCU_Assert(txBuf != NULL);
   BCC_MCU_Assert(rxBuf != NULL);
@@ -234,8 +234,8 @@ bcc_status_t BCC_MCU_TransferSpi(const uint8_t drvInstance, uint8_t txBuf[], uin
   return ok ? BCC_STATUS_SUCCESS : BCC_STATUS_SPI_FAIL;
 }
 
-bcc_status_t BCC_MCU_TransferTpl(const uint8_t drvInstance, uint8_t txBuf[],
-    uint8_t rxBuf[], const uint16_t rxTrCnt)
+bcc_status_t BCC_MCU_TransferTpl(const uint8_t drvInstance, volatile uint8_t txBuf[],
+    volatile uint8_t rxBuf[], const uint16_t rxTrCnt)
 {
   return BCC_STATUS_SPI_FAIL;
 }

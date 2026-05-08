@@ -42,6 +42,8 @@
  * Includes
  ******************************************************************************/
 
+#include "HALAL/Models/MPU.hpp"
+
 #include "MC33771C.h"
 #include "MC33772C.h"
 
@@ -206,27 +208,27 @@
     ((int16_t)((((int32_t)(BCC_GET_MEAS_RAW(reg))) * 32) / 100))
 
 /*!
- * @brief Converts a value of the MEAS_IC_TEMP register to [°C].
+ * @brief Converts a value of the MEAS_IC_TEMP register to [ï¿½C].
  *
  * Resolution of the MEAS_IC_TEMP register is 0.032 Kelvin/LSB.
  *
  * @param reg Value of the MEAS_IC_TEMP register.
  *
- * @return Converted value in [°C] multiplied by 10
- *         (i.e. resolution of 0.1 °C); int32_t type.
+ * @return Converted value in [ï¿½C] multiplied by 10
+ *         (i.e. resolution of 0.1 ï¿½C); int32_t type.
  */
 #define BCC_GET_IC_TEMP_C(reg) \
     ((int16_t)((((int32_t)(BCC_GET_MEAS_RAW(reg))) * 32 - 273150) / 100))
 
 /*!
- * @brief Converts a value of the MEAS_IC_TEMP register to [°F].
+ * @brief Converts a value of the MEAS_IC_TEMP register to [ï¿½F].
  *
  * Resolution of the MEAS_IC_TEMP register is 0.032 Kelvin/LSB.
  *
  * @param reg Value of the MEAS_IC_TEMP register.
  *
- * @return Converted value in [°F] multiplied by 10
- *         (i.e. resolution of 0.1 °F); int32_t type.
+ * @return Converted value in [ï¿½F] multiplied by 10
+ *         (i.e. resolution of 0.1 ï¿½F); int32_t type.
  */
 #define BCC_GET_IC_TEMP_F(reg) \
     ((int16_t)((((int32_t)(BCC_GET_MEAS_RAW(reg))) * 288 - 2298350) / 500))
