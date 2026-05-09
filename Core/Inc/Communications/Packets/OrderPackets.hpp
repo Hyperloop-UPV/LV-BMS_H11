@@ -30,7 +30,7 @@ public:
     static void start()
     {
         if (Brake_order == nullptr) {
-            ErrorHandler("Order Brake not initialized");
+            FAULT("Order Brake not initialized");
         }
         
 

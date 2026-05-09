@@ -5,12 +5,11 @@
 
 #include "LV-BMS_Data.hpp"
 #include "LV-BMS_Pinout.hpp"
-#include "LV-BMS_Domains.hpp"
 
 #if LV_BMS_VERSION_MAJOR == 10
 #include "BMS.hpp"
 #elif LV_BMS_VERSION_MAJOR == 11
-#include "BCC_ST-LIB/bcc_stlib.h"
+#include "../../../../deps/BCC_SW_Driver/bcc/bcc.h"
 #endif
 //#include "DCLV/DCLV.hpp"
 
@@ -21,7 +20,6 @@ using BMS_State = DataPackets::State;
 
 extern TIM_TypeDef* global_tick_timer;
 extern ST_LIB::DigitalOutputDomain::Instance *spi_cs;
-extern ST_LIB::SPIDomain::SPIWrapper<spi_def> *spi_wrapper;
 
 #define GetMicroseconds() global_tick_timer->CNT
 
@@ -79,7 +77,7 @@ struct LV_BMS {
     float cells[6];
   };
 
-  static inline float SOC{};
+  static inline float SOC{50.0f};
 
   static inline float current{};
 
@@ -100,7 +98,6 @@ struct LV_BMS {
 
   //////////////////////////////////////
 
-  static void set_protection_name(Protection *protection, const std::string &name);
   static void init();
   static void start();
   static void add_protections();
@@ -114,73 +111,6 @@ struct LV_BMS {
 
   static void read();
   static void read_temperature(const float voltage, float* temperature);
-
-
-  /*-----State Machine declaration------*/
-  static constexpr auto connecting_state = make_state(BMS_State::CONNECTING,
-    Transition<BMS_State>{BMS_State::OPERATIONAL,
-      []() {
-        return OrderPackets::control_station_tcp->is_connected();
-      }
-    }
-  );
-
-  static constexpr auto operational_state = make_state(BMS_State::OPERATIONAL,
-    Transition<BMS_State>{BMS_State::FAULT,
-      []() {
-        return !OrderPackets::control_station_tcp->is_connected();
-      }
-    }
-  );
-
-  static constexpr auto fault_state = make_state(BMS_State::FAULT);
-
-  static inline constinit auto BMS_State_Machine = []() consteval
-  {
-    auto sm = make_state_machine(BMS_State::CONNECTING,
-      connecting_state,
-      operational_state,
-      fault_state
-    );
-
-    //////////////////////////////////////////////
-    // Enter/Exit actions
-
-    // BMS_State::CONNECTING
-
-
-    // BMS_State::OPERATIONAL
-    sm.add_enter_action([]() {
-      LV_BMS::operational_led->turn_on();
-    }, operational_state);
-
-    sm.add_exit_action([]() {
-      LV_BMS::operational_led->turn_off();
-    }, operational_state);
-
-    // BMS_State::FAULT
-    sm.add_enter_action([]() {
-      LV_BMS::fault_led->turn_on();
-    }, fault_state);
-
-    sm.add_exit_action([]() {
-      LV_BMS::fault_led->turn_off();
-    }, fault_state);
-
-    //////////////////////////////////////////////
-    // Cyclic actions
-
-    // BMS_State::CONNECTING
-    sm.add_cyclic_action([]() {
-      LV_BMS::operational_led->toggle();
-    }, std::chrono::milliseconds(300), connecting_state);
-
-    // BMS_State::OPERATIONAL
-
-    // BMS_State::FAULT
-
-    return sm;
-  }();
 }; // struct LV_BMS
 
 #endif // LV_BMS_HPP

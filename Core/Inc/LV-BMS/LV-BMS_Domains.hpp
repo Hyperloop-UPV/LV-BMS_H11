@@ -3,6 +3,8 @@
 
 #include "ST-LIB.hpp"
 #include "LV-BMS_Data.hpp"
+#include "LV-BMS_StateMachine.hpp"
+#include "LV-BMS.hpp"
 
 //////////////////////////////////////////////////////////
 // Timers
@@ -93,23 +95,36 @@ inline constexpr auto eth =
 #endif // STLIB_ETH
 
 //////////////////////////////////////////////////////////
+// Protections
+//////////////////////////////////////////////////////////
+
+inline constexpr auto soc_protection =
+  Protections::protection<"SOC", LV_BMS::SOC>(
+    Protections::Rules::range(20.0f, 80.0f, 25.0f, 75.0f)
+  );
+
+//////////////////////////////////////////////////////////
 // Board
 //////////////////////////////////////////////////////////
 
+using lvBMS_faultpolicy =
+  ST_LIB::FaultPolicy<LV_BMS_SM::State_Machine, FaultState_OnEnter>;
+
 using lvBMS_Board = ST_LIB::Board<
+  lvBMS_faultpolicy,
 #if STLIB_ETH
-    eth, 
+  eth, 
 #endif
-    timer_us_tick_def, 
-    //pg12_led_def,
-    operational_led_def, 
-    fault_led_def,
+  timer_us_tick_def, 
+  //pg12_led_def,
+  operational_led_def, 
+  fault_led_def,
 #if LV_BMS_VERSION_MAJOR == 10
-    current_adc_def,
+  current_adc_def,
 #elif LV_BMS_VERSION_MAJOR == 11
-    timeout_timer_def,
+  timeout_timer_def,
 #endif
-    spi_def,
-    spi_cs_def>;
+  spi_def,
+  spi_cs_def>;
 
 #endif // LV_BMS_DOMAINS_HPP

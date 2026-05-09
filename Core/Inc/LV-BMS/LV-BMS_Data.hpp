@@ -1,9 +1,6 @@
 #ifndef DATA_HPP
 #define DATA_HPP
 
-#include "ST-LIB.hpp"
-#include "Communications/Packets/DataPackets.hpp"
-
 #ifndef glue
 #define glue_(a,b) a##b
 #define glue(a,b) glue_(a,b)
@@ -24,6 +21,9 @@
 #define R0 100.0                     // Ohm
 #define TCR 0.00385
 
+#define LV_BMS_CONNECTING_UPDATE_FREQ std::chrono::milliseconds(300)
+
+// versioning
 #if !defined(LV_BMS_VERSION_MAJOR)
 #if defined(USE_H11_CODE)
 #define LV_BMS_VERSION_MAJOR 11

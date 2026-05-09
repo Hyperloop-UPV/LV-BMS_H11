@@ -1,13 +1,13 @@
 #ifndef BCC_STLIB_H
 #define BCC_STLIB_H
 
-#include "../LV-BMS_Domains.hpp"
+#include "ST-LIB.hpp"
 
-#include "../../../../deps/BCC_SW_Driver/bcc/bcc.h"
+#include "../LV-BMS_Domains.hpp"
 
 // NOTE: LV-BMS H11 uses 'MC33772C'
 //       HV-BMS H11 uses 'MC33771C'
-#include "../../../../deps/BCC_SW_Driver/bcc/MC33772C.h"
+//#include "../../../../deps/BCC_SW_Driver/bcc/MC33772C.h"
 
 //#define USE_MC33771C
 #define USE_MC33772C
@@ -108,7 +108,7 @@ bcc_status_t BCC_MCU_TransferTpl(const uint8_t drvInstance, uint8_t txBuf[],
 #define BCC_MCU_Assert(expr) \
   do { \
     if(!(expr)) { \
-      ErrorHandler("BCC assert fail: " stringify(expr)); \
+      FAULT("BCC assert fail: " stringify(expr)); \
     } \
   } while(0)
 
@@ -564,7 +564,7 @@ static constexpr double OVERVOLTAGE_THRESHOLD_ONE_CONVERTED =
 
 
 void bcc_dummy_check() {
-  ErrorHandler("This function should not be called");
+  FAULT("This function should not be called");
 
   if constexpr ((UNDERVOLTAGE_THRESHOLD_ONE_F64 < 0.0) || (UNDERVOLTAGE_THRESHOLD_ONE_F64 > 5.0)) {
     ST_LIB::compile_error("Undervoltage threshold out of range [0V, 5V]");

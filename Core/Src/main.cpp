@@ -3,11 +3,15 @@
 
 #include "ST-LIB.hpp"
 
-#include "LV-BMS/LV-BMS.hpp"
 #include "LV-BMS/LV-BMS_Pinout.hpp"
 #include "LV-BMS/LV-BMS_Domains.hpp"
 
+#if LV_BMS_VERSION_MAJOR == 11
+#include "LV-BMS/BCC_ST-LIB/bcc_stlib.h"
+#endif
+
 TIM_TypeDef *global_tick_timer;
+extern ST_LIB::SPIDomain::SPIWrapper<spi_def> *spi_wrapper;
 
 #if 0
 // Used to test LVBMS-H11 board
@@ -102,6 +106,8 @@ int main(void) {
 
   while (1) {
     Scheduler::update();
+    lvBMS_Board::evaluate_protections();
+    Diagnostics::Hub::flush();
 #ifdef STLIB_ETH
     eth_instance->update();
 #endif
@@ -109,7 +115,7 @@ int main(void) {
 }
 
 void Error_Handler(void) {
-  ErrorHandler("HAL error handler triggered");
+  FAULT("HAL error handler triggered");
   while (1) {
   }
 }

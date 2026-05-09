@@ -440,8 +440,8 @@ bcc_status_t BCC_Reg_ReadSpi(bcc_drv_config_t* const drvConfig,
     const bcc_cid_t cid, uint8_t regAddr, const uint8_t regCnt,
     uint16_t* regVal)
 {
-    static D1_NC uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
-    static D1_NC uint8_t rxBuf[BCC_MSG_SIZE]; /* Buffer for receiving. */
+    static D1_NC volatile uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
+    static D1_NC volatile uint8_t rxBuf[BCC_MSG_SIZE]; /* Buffer for receiving. */
     uint8_t regIdx;              /* Index of a received register. */
     bcc_status_t status;
 
@@ -534,7 +534,7 @@ bcc_status_t BCC_Reg_ReadSpi(bcc_drv_config_t* const drvConfig,
 bcc_status_t BCC_Reg_WriteTpl(bcc_drv_config_t* const drvConfig,
     const bcc_cid_t cid, const uint8_t regAddr, const uint16_t regVal)
 {
-    static D1_NC uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
+    static D1_NC volatile uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
     bcc_status_t status;
 
     BCC_MCU_Assert(drvConfig != NULL);
@@ -567,8 +567,8 @@ bcc_status_t BCC_Reg_WriteTpl(bcc_drv_config_t* const drvConfig,
 bcc_status_t BCC_Reg_WriteSpi(bcc_drv_config_t* const drvConfig,
     const bcc_cid_t cid, const uint8_t regAddr, const uint16_t regVal)
 {
-    static D1_NC uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
-    static D1_NC uint8_t rxBuf[BCC_MSG_SIZE]; /* Buffer for receiving. */
+    static D1_NC volatile uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
+    static D1_NC volatile uint8_t rxBuf[BCC_MSG_SIZE]; /* Buffer for receiving. */
     bcc_status_t status;
 
     BCC_MCU_Assert(drvConfig != NULL);
@@ -619,7 +619,7 @@ bcc_status_t BCC_Reg_WriteSpi(bcc_drv_config_t* const drvConfig,
 bcc_status_t BCC_Reg_WriteGlobalTpl(bcc_drv_config_t* const drvConfig,
     const uint8_t regAddr, const uint16_t regVal)
 {
-    static D1_NC uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
+    static D1_NC volatile uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
     bcc_status_t status;
 
     BCC_MCU_Assert(drvConfig != NULL);
@@ -653,7 +653,7 @@ bcc_status_t BCC_Reg_WriteGlobalTpl(bcc_drv_config_t* const drvConfig,
 bcc_status_t BCC_SendNopTpl(bcc_drv_config_t* const drvConfig,
     const bcc_cid_t cid)
 {
-    static D1_NC uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
+    static D1_NC volatile uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
     bcc_status_t status;
 
     BCC_MCU_Assert(drvConfig != NULL);
@@ -688,8 +688,8 @@ bcc_status_t BCC_SendNopTpl(bcc_drv_config_t* const drvConfig,
 bcc_status_t BCC_SendNopSpi(bcc_drv_config_t* const drvConfig,
     const bcc_cid_t cid)
 {
-    static D1_NC uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
-    static D1_NC uint8_t rxBuf[BCC_MSG_SIZE]; /* Buffer for receiving. */
+    static D1_NC volatile uint8_t txBuf[BCC_MSG_SIZE]; /* Transmission buffer. */
+    static D1_NC volatile uint8_t rxBuf[BCC_MSG_SIZE]; /* Buffer for receiving. */
     bcc_status_t status;
 
     BCC_MCU_Assert(drvConfig != NULL);

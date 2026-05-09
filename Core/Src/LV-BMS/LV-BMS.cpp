@@ -1,6 +1,13 @@
 #define BCC_STLIB_IMPLEMENTATION
 #include "LV-BMS/LV-BMS.hpp"
-#include "float.h"
+#include "LV-BMS/LV-BMS_StateMachine.hpp"
+#include "LV-BMS/LV-BMS_Domains.hpp"
+
+#if LV_BMS_VERSION_MAJOR == 11
+#include "LV-BMS/BCC_ST-LIB/bcc_stlib.h"
+#endif
+
+#include <float.h>
 
 ST_LIB::DigitalOutputDomain::Instance *spi_cs;
 ST_LIB::SPIDomain::SPIWrapper<spi_def> *spi_wrapper;
@@ -59,26 +66,58 @@ void Init_BCC_Driver()
   LV_BMS::bcc_config.cellCnt[0] = 6U;
   bcc_status_t status = BCC_Init(&LV_BMS::bcc_config);
   if(status != BCC_STATUS_SUCCESS) {
-    ErrorHandler("Could not init BCC: %s", get_bcc_error_str(status));
+    FAULT("Could not init BCC: %s", get_bcc_error_str(status));
     return;
   }
 
   status = Init_BCC_Registers();
   if(status != BCC_STATUS_SUCCESS) {
-    ErrorHandler("Could not init BCC registers: %s", 
+    FAULT("Could not init BCC registers: %s", 
                  get_bcc_error_str(status));
     return;
   }
 
   status = Clear_BCC_FaultRegisters();
   if(status != BCC_STATUS_SUCCESS) {
-    ErrorHandler("Could not clear BCC fault registers: %s", 
+    FAULT("Could not clear BCC fault registers: %s", 
                  get_bcc_error_str(status));
     return;
   }
 }
 
-#endif
+#endif // LV_BMS_VERSION_MAJOR == 11
+
+//---------------------------------------------------------------
+
+// connecting
+void ConnectingState_Update(void)
+{
+  LV_BMS::operational_led->toggle();
+}
+
+// operational
+void OperationalState_OnEnter(void)
+{
+  LV_BMS::operational_led->turn_on();
+}
+
+void OperationalState_OnExit(void)
+{
+  LV_BMS::operational_led->turn_off();
+}
+
+// fault
+void FaultState_OnEnter(void)
+{
+  LV_BMS::fault_led->turn_on();
+}
+
+// NOTE: This is to be implemented, there is no fault recovery yet!
+//void FaultState_OnExit(void)
+//{
+//  LV_BMS::fault_led->turn_off();
+//}
+
 
 //---------------------------------------------------------------
 
@@ -112,28 +151,18 @@ void LV_BMS::init() {
   Init_BCC_Driver();
 #endif
 
-  ProtectionManager::link_state_machine(LV_BMS::BMS_State_Machine,
-                                        static_cast<uint8_t>(BMS_State::FAULT));
-  ProtectionManager::add_standard_protections();
-  ProtectionManager::set_id(Boards::ID::BMSA);
   //LV_BMS::add_protections();
-  ProtectionManager::initialize();
-
   //DCLV::init();
 }
 
 void LV_BMS::start() {
   last_reading_time = HAL_GetTick();
 
-  Scheduler::register_task(1000*10, [](){
-    ProtectionManager::check_protections();
-  });
-
-  BMS_State_Machine.start();
+  LV_BMS_SM::State_Machine.start();
   Scheduler::register_task(1000, []() {
     BMS_State prev_state = LV_BMS::state;
-    LV_BMS::BMS_State_Machine.check_transitions();
-    LV_BMS::state = BMS_State_Machine.get_current_state();
+    LV_BMS_SM::State_Machine.check_transitions();
+    LV_BMS::state = LV_BMS_SM::State_Machine.get_current_state();
     if(LV_BMS::state != prev_state) [[unlikely]] {
       DataPackets::control_station_udp->send_packet(*DataPackets::Current_State_packet);
     }
@@ -144,16 +173,10 @@ void LV_BMS::start() {
   });
 }
 
-void LV_BMS::set_protection_name(Protection* protection,
-                                 const std::string& name) {
-  protection->set_name((char*)malloc(name.size() + 1));
-  sprintf(protection->get_name(), "%s", name.c_str());
-}
-
 void LV_BMS::add_protections() {
-  Protection* soc_protection = &ProtectionManager::_add_protection(
-    &SOC, Boundary<float, OUT_OF_RANGE>{24.0f, 80.0f});
-  set_protection_name(soc_protection, "SOC");
+  //Protection* soc_protection = &ProtectionManager::_add_protection(
+  //  &SOC, Boundary<float, OUT_OF_RANGE>{24.0f, 80.0f});
+  //set_protection_name(soc_protection, "SOC");
 }
 
 //------------------- SOC ------------------------
@@ -187,10 +210,12 @@ void LV_BMS::update_SOC() {
       SOC += coulomb_counting_SOC(0 - *current);
     } else { */
       SOC = ocv_battery_SOC();
+#if LV_BMS_VERSION_MAJOR == 10
       if((SOC > -100.0f) && (SOC < 200.0f) && ((SOC < 20.0f) || (SOC > 80.0f))) [[unlikely]] {
-        ErrorHandler("Fault: LV battery State of charge not in range [20, 80]");
-        BMS_State_Machine.force_change_state(static_cast<size_t>(BMS_State::FAULT));
+        FAULT("Fault: LV battery State of charge not in range [20, 80]");
+        LV_BMS_SM::State_Machine.force_change_state(static_cast<size_t>(BMS_State::FAULT));
       }
+#endif
    /*  }
   } */
 }

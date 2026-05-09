@@ -51,19 +51,19 @@ public:
     static void start()
     {
         if (Battery_Voltages_packet == nullptr) {
-            ErrorHandler("Packet Battery_Voltages not initialized");
+            FAULT("Packet Battery_Voltages not initialized");
         }
         if (Battery_Temperatures_packet == nullptr) {
-            ErrorHandler("Packet Battery_Temperatures not initialized");
+            FAULT("Packet Battery_Temperatures not initialized");
         }
         if (State_of_Charge_packet == nullptr) {
-            ErrorHandler("Packet State_of_Charge not initialized");
+            FAULT("Packet State_of_Charge not initialized");
         }
         if (Battery_Current_packet == nullptr) {
-            ErrorHandler("Packet Battery_Current not initialized");
+            FAULT("Packet Battery_Current not initialized");
         }
         if (Current_State_packet == nullptr) {
-            ErrorHandler("Packet Current_State not initialized");
+            FAULT("Packet Current_State not initialized");
         }
         
 
