@@ -43,8 +43,8 @@ inline constexpr ST_LIB::ADCDomain::ADC current_adc_def(
 // SPI
 //////////////////////////////////////////////////////////
 
-inline constexpr ST_LIB::DigitalOutputDomain::DigitalOutput spi_cs_def{ST_LIB::PD3};
 
+#if LV_BMS_VERSION_MAJOR == 10
 static consteval ST_LIB::SPIDomain::SPIConfig get_spi_config() {
   ST_LIB::SPIDomain::SPIConfig conf {
     ST_LIB::SPIDomain::ClockPolarity::HIGH,
@@ -56,21 +56,36 @@ static consteval ST_LIB::SPIDomain::SPIConfig get_spi_config() {
   return conf;
 }
 
-#if LV_BMS_VERSION_MAJOR == 10
+inline constexpr ST_LIB::DigitalOutputDomain::DigitalOutput spi_cs_def{ST_LIB::PD3};
+
 inline constexpr auto spi_def =
   ST_LIB::SPIDomain::Device<ST_LIB::DMA_Domain::Stream::dma1_stream5, 
                             ST_LIB::DMA_Domain::Stream::dma1_stream6>(
     ST_LIB::SPIDomain::SPIMode::MASTER, 
     ST_LIB::SPIDomain::SPIPeripheral::spi3, 1000000, 
     ST_LIB::PC10, ST_LIB::PC11, ST_LIB::PC12, get_spi_config());
+
 #elif LV_BMS_VERSION_MAJOR == 11
-// chip select (nss_pin) is ST_LIB::PF6
+static consteval ST_LIB::SPIDomain::SPIConfig get_spi_config() {
+  ST_LIB::SPIDomain::SPIConfig conf {
+    ST_LIB::SPIDomain::ClockPolarity::LOW,
+    ST_LIB::SPIDomain::ClockPhase::SECOND_EDGE,
+    ST_LIB::SPIDomain::BitOrder::MSB_FIRST,
+    ST_LIB::SPIDomain::NSSMode::SOFTWARE  // Manejamos CS manualmente
+  };
+  conf.data_size = ST_LIB::SPIDomain::DataSize::SIZE_8BIT;
+  return conf;
+}
+
+inline constexpr ST_LIB::DigitalOutputDomain::DigitalOutput spi_cs_def{ST_LIB::PF6};
+
 inline constexpr auto spi_def =
   ST_LIB::SPIDomain::Device<ST_LIB::DMA_Domain::Stream::dma1_stream5, 
                             ST_LIB::DMA_Domain::Stream::dma1_stream6>(
     ST_LIB::SPIDomain::SPIMode::MASTER, 
     ST_LIB::SPIDomain::SPIPeripheral::spi5, 1000000, 
     ST_LIB::PF7, ST_LIB::PF8, ST_LIB::PF11, get_spi_config());
+
 #endif
 
 //////////////////////////////////////////////////////////

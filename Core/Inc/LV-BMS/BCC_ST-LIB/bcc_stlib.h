@@ -229,8 +229,9 @@ bcc_status_t BCC_MCU_TransferSpi(const uint8_t drvInstance, volatile uint8_t txB
   BCC_MCU_Assert(txBuf != NULL);
   BCC_MCU_Assert(rxBuf != NULL);
 
+  spi_cs->turn_off();
   bool ok = spi_wrapper->template transceive(txBuf, rxBuf, BCC_MSG_SIZE);
-  // bool ok = spi_wrapper->transceive(txBuf, rxBuf, BCC_MSG_SIZE);
+  spi_cs->turn_on();
   return ok ? BCC_STATUS_SUCCESS : BCC_STATUS_SPI_FAIL;
 }
 
