@@ -100,6 +100,8 @@ int main(void) {
   ST_LIB::SPIDomain::SPIWrapper<spi_def> spi_wrapper_internal(*LV_BMS::spi_pins);
   spi_wrapper = &spi_wrapper_internal;
   spi_cs = &lvBMS_Board::instance_of<spi_cs_def>();
+  bms_rst = &lvBMS_Board::instance_of<bms_rst_def>();
+  bms_rst->turn_on();
 
   LV_BMS::init();
   LV_BMS::start();

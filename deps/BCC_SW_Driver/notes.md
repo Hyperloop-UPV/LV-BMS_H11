@@ -1,3 +1,6 @@
+* 53: SPI Frame
+*  It is required that the SCLK input is low before the falling edge of CSB (SCLK phase).
+
 # NEED TO:
 
  - Find how to: Automatic over/undervoltage and temperature detection routable to fault pin

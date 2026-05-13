@@ -15,6 +15,7 @@
 extern TIM_TypeDef* global_tick_timer;
 extern TIM_TypeDef* timeout_timer; // This one must be 32 bits
 extern ST_LIB::DigitalOutputDomain::Instance *spi_cs;
+extern ST_LIB::DigitalOutputDomain::Instance *bms_rst;
 extern ST_LIB::SPIDomain::SPIWrapper<spi_def> *spi_wrapper;
 
 inline bool bcc_exceeded_timeout = false;
@@ -229,8 +230,9 @@ bcc_status_t BCC_MCU_TransferSpi(const uint8_t drvInstance, volatile uint8_t txB
   BCC_MCU_Assert(txBuf != NULL);
   BCC_MCU_Assert(rxBuf != NULL);
 
+  spi_cs->turn_off();
   bool ok = spi_wrapper->template transceive(txBuf, rxBuf, BCC_MSG_SIZE);
-  // bool ok = spi_wrapper->transceive(txBuf, rxBuf, BCC_MSG_SIZE);
+  spi_cs->turn_on();
   return ok ? BCC_STATUS_SUCCESS : BCC_STATUS_SPI_FAIL;
 }
 
@@ -252,8 +254,12 @@ void BCC_MCU_WriteCsbPin(const uint8_t drvInstance, const uint8_t value)
 void BCC_MCU_WriteRstPin(const uint8_t drvInstance, const uint8_t value)
 {
   // NOTE: this should actually be handled in hv bms (@Jorge_Canut)
-  if(value != 0) {
-    BCC_MCU_Assert(false && !"LV BMS Reset pin requested");
+  if(value == 0) {
+    bms_rst->turn_off();
+    HAL_Delay(10);
+  } else {
+    bms_rst->turn_on();
+    HAL_Delay(10);
   }
 }
 

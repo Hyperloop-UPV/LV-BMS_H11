@@ -10,6 +10,7 @@
 #include <float.h>
 
 ST_LIB::DigitalOutputDomain::Instance *spi_cs;
+ST_LIB::DigitalOutputDomain::Instance *bms_rst;
 ST_LIB::SPIDomain::SPIWrapper<spi_def> *spi_wrapper;
 
 #if LV_BMS_VERSION_MAJOR == 10
