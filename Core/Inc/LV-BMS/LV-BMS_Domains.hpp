@@ -78,6 +78,7 @@ static consteval ST_LIB::SPIDomain::SPIConfig get_spi_config() {
 }
 
 inline constexpr ST_LIB::DigitalOutputDomain::DigitalOutput spi_cs_def{ST_LIB::PF6};
+inline constexpr ST_LIB::DigitalOutputDomain::DigitalOutput bms_rst_def{ST_LIB::PF1};
 
 inline constexpr auto spi_def =
   ST_LIB::SPIDomain::Device<ST_LIB::DMA_Domain::Stream::dma1_stream5, 
@@ -125,6 +126,7 @@ using lvBMS_Board = ST_LIB::Board<
     timeout_timer_def,
 #endif
     spi_def,
-    spi_cs_def>;
+    spi_cs_def,
+    bms_rst_def>;
 
 #endif // LV_BMS_DOMAINS_HPP
