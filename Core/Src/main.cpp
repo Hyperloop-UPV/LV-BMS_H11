@@ -81,6 +81,15 @@ int main(void) {
   global_tick_timer->ARR = UINT32_MAX;
   global_tick_timer_wrapper.counter_enable();
 
+#ifdef SCHEDULER_GET_LAST_N_TASKS
+  UART::Peripheral *uart = &UART::uart1;
+#else
+  UART::Peripheral *uart = 0;
+#endif
+  if(!Scheduler::init_perf(global_tick_timer, uart)) {
+    FAULT("Could not init perf for scheduler");
+  }
+
 #if LV_BMS_VERSION_MAJOR == 11
   // setup timeout timer
   auto timeout_timer_wrapper = get_timer_instance(lvBMS_Board, timeout_timer_def);

@@ -38,5 +38,6 @@
     "shared_mutex": "cpp",
     "bcc_communication.h": "c",
     "bcc.h": "c"
-  }
+  },
+  "cortex-debug.variableUseNaturalFormat": false
 }
