@@ -251,6 +251,8 @@ static void bcc_get_measurements() {
   (void)temp_times_ten;
   (void)ADCIA_v;
   (void)ADCIB_v;
+
+  bcc_start_measurements();
 }
 
 // end LV_BMS_VERSION_MAJOR == 11
