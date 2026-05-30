@@ -118,7 +118,7 @@ static bcc_status_t Clear_BCC_FaultRegisters()
 
 static inline bool bcc_start_measurements() {
   bcc_status_t status = 
-    BCC_Meas_StartConversion(&LV_BMS::bcc_config, (bcc_cid_t)0, BCC_AVG_1);
+    BCC_Meas_StartConversion(&LV_BMS::bcc_config, (bcc_cid_t)1, BCC_AVG_1);
   if(status != BCC_STATUS_SUCCESS) {
     WARNING("Could not start bcc measurements: %s", get_bcc_error_str(status));
     return false;
@@ -154,7 +154,7 @@ static void Init_BCC_Driver()
   }
 
   uint64_t guid;
-  status = BCC_GUID_Read(&LV_BMS::bcc_config, (bcc_cid_t)0, &guid);
+  status = BCC_GUID_Read(&LV_BMS::bcc_config, (bcc_cid_t)1, &guid);
   if(status != BCC_STATUS_SUCCESS) {
     WARNING("Could not read device guid: %s", get_bcc_error_str(status));
     return;
@@ -173,13 +173,14 @@ static void bcc_get_measurements() {
   bcc_status_t status;
 
   bool completed = false;
-  status = BCC_Meas_IsConverting(&LV_BMS::bcc_config, (bcc_cid_t)0, &completed);
+  // NOTE: For HV-BMS (@JorgeCanut), probably make a round robin with the bcc_cids
+  status = BCC_Meas_IsConverting(&LV_BMS::bcc_config, (bcc_cid_t)1, &completed);
   if(!completed) {
     // Wait until next call
     return;
   }
 
-  status = BCC_Meas_GetRawValues(&LV_BMS::bcc_config, (bcc_cid_t)0, measurements);
+  status = BCC_Meas_GetRawValues(&LV_BMS::bcc_config, (bcc_cid_t)1, measurements);
   if(status != BCC_STATUS_SUCCESS) {
     WARNING("Could not get bcc measurements: %s", get_bcc_error_str(status));
     return;
@@ -192,16 +193,20 @@ static void bcc_get_measurements() {
   int32_t coulomb_counter = 
     BCC_GET_COULOMB_CNT(measurements[BCC_MSR_COULOMB_CNT1],
                         measurements[BCC_MSR_COULOMB_CNT2]);
+
+#if 0
+  // NOTE: We don't use isense for LV-BMS
   int32_t isense_microvolts =
     BCC_GET_ISENSE_VOLT(measurements[BCC_MSR_ISENSE1],
                         measurements[BCC_MSR_ISENSE2]);
-#if 0
-  // TODO: get rshunt resistance
   int32_t isense_miliamps =
     BCC_GET_ISENSE_AMP(LV_BMS_RSHUNT_RESISTANCE, measurements[BCC_MSR_ISENSE1],
                        measurements[BCC_MSR_ISENSE2]);
+
+  (void)isense_microvolts;
   (void)isense_miliamps;
 #endif
+
   /* In micro volts */
   uint32_t stack_voltage = BCC_GET_STACK_VOLT(measurements[BCC_MSR_STACK_VOLT]);
 
@@ -227,7 +232,6 @@ static void bcc_get_measurements() {
   uint32_t ADCIB_v = BCC_GET_VOLT(measurements[BCC_MSR_VBGADC1B]);
 
   (void)coulomb_counter;
-  (void)isense_microvolts;
   (void)stack_voltage;
 
   (void)cell1_voltage;
