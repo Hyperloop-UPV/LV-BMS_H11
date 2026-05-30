@@ -100,7 +100,6 @@ struct LV_BMS {
 
   static void init();
   static void start();
-  static void add_protections();
 
   static float coulomb_counting_SOC(float current);
   static float ocv_battery_SOC();
@@ -110,7 +109,6 @@ struct LV_BMS {
   static void get_max_min_temperatures();
 
   static void read();
-  static void read_temperature(const float voltage, float* temperature);
 }; // struct LV_BMS
 
 #endif // LV_BMS_HPP

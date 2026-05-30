@@ -13,56 +13,8 @@
 TIM_TypeDef *global_tick_timer;
 extern ST_LIB::SPIDomain::SPIWrapper<spi_def> *spi_wrapper;
 
-#if 0
-// Used to test LVBMS-H11 board
-enum class Mode { Input = 0, Output = 1, Alt = 2, Analog = 3 };
-enum class Pull { None = 0, Up = 1, Down = 2 };
-enum class Speed { Low = 0, Medium = 1, High = 2, VeryHigh = 3 };
-
-template<uintptr_t gpio_addr, char portletter, uint8_t pin>
-struct gpio_port_pin {
-#define gpio ((GPIO_TypeDef*)gpio_addr)
-    template<Mode mode, Pull pull = Pull::None, Speed speed = Speed::Low>
-    static void Init(void)
-    {
-        static_assert(portletter >= 'A' && portletter <= 'H'); /* for our chip */
-        static_assert(pin <= 16); /* for our chip */
-        RCC->AHB4ENR |= (1 << (portletter - 'A'));
-        gpio->MODER &= ~(GPIO_MODER_MODER0 << (pin << 1));
-        gpio->MODER |= (int)mode << (pin << 1);
-        gpio->PUPDR &= ~(GPIO_PUPDR_PUPD0 << (pin << 1));
-        gpio->PUPDR |= (int)pull << (pin << 1);
-        if constexpr (mode == Mode::Output || mode == Mode::Alt) {
-            gpio->OTYPER &= ~(GPIO_OTYPER_OT0 << pin);
-            gpio->OSPEEDR &= ~(GPIO_OSPEEDR_OSPEED0 << (pin << 1));
-            gpio->OSPEEDR |= (int)speed << (pin << 1);
-        }
-    }
-
-    static void TurnOn(void)  { gpio->BSRR = GPIO_BSRR_BS0 << pin; }
-    static void TurnOff(void) { gpio->BSRR = GPIO_BSRR_BR0 << pin; }
-#undef gpio
-
-    static void Toggle(void) {
-        if (active) {
-            TurnOff();
-            active = false;
-        } else {
-            TurnOn();
-            active = true;
-        }
-    }
-
-    static inline bool active{false};
-};
-
-using led1 = gpio_port_pin<GPIOG_BASE, 'G', 12>;
-#endif
-
 int main(void) {
   Hard_fault_check();
-  //led1::Init<Mode::Output>();
-  //led1::TurnOn();
 
   lvBMS_Board::init();
 
@@ -83,11 +35,24 @@ int main(void) {
 
 #ifdef SCHEDULER_GET_LAST_N_TASKS
   UART::Peripheral *uart = &UART::uart1;
+  if(!Scheduler::init_perf(global_tick_timer, uart)) {
+    FAULT("Could not init perf for scheduler");
+  }
 #else
   UART::Peripheral *uart = 0;
 #endif
-  if(!Scheduler::init_perf(global_tick_timer, uart)) {
-    FAULT("Could not init perf for scheduler");
+
+  uart = &UART::uart1;
+  auto uart_id = UART::inscribe(*uart);
+  UART::start();
+
+  char message[] = "UART Message!!!!";
+  if(!UART::transmit_polling(
+    uart_id,
+    (uint8_t*)&message[0],
+    sizeof(message)
+  )) {
+    WARNING("UART Error while trying to transmit timing info");
   }
 
 #if LV_BMS_VERSION_MAJOR == 11

@@ -22,7 +22,11 @@ struct LV_BMS_SM {
   static constexpr auto connecting_state = make_state(BMS_State::CONNECTING,
     Transition<BMS_State>{BMS_State::OPERATIONAL,
       []() {
+#if STLIB_ETH
         return OrderPackets::control_station_tcp->is_connected();
+#else
+        return false; // note: never connected
+#endif
       }
     }
   );
@@ -30,7 +34,11 @@ struct LV_BMS_SM {
   static constexpr auto operational_state = make_state(BMS_State::OPERATIONAL,
     Transition<BMS_State>{BMS_State::FAULT,
       []() {
+#if STLIB_ETH
         return !OrderPackets::control_station_tcp->is_connected();
+#else
+        return true; // note: always disconnected
+#endif
       }
     }
   );

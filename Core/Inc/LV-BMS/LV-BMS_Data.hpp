@@ -23,6 +23,8 @@
 
 #define LV_BMS_CONNECTING_UPDATE_FREQ std::chrono::milliseconds(300)
 
+#define LV_BMS_VERSION_MAJOR 11
+
 // versioning
 #if !defined(LV_BMS_VERSION_MAJOR)
 #if defined(USE_H11_CODE)

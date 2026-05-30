@@ -44,9 +44,13 @@ public:
     inline static HeapPacket *State_of_Charge_packet{nullptr};
     inline static HeapPacket *Battery_Current_packet{nullptr};
     inline static HeapPacket *Current_State_packet{nullptr};
-    
+
+#if STLIB_ETH
     inline static DatagramSocket *control_station_udp{nullptr};
-    
+#else
+    inline static void *control_station_udp{nullptr};
+#endif
+
 
     static void start()
     {
@@ -66,9 +70,11 @@ public:
             FAULT("Packet Current_State not initialized");
         }
         
-
+#if STLIB_ETH
         control_station_udp = new DatagramSocket("192.168.1.11",50400,"192.168.0.9",50400);
-        
+#endif
+
+#if STLIB_ETH
         Scheduler::register_task(16670, +[](){
             DataPackets::control_station_udp->send_packet(*DataPackets::Battery_Voltages_packet);
             DataPackets::control_station_udp->send_packet(*DataPackets::Battery_Temperatures_packet);
@@ -78,6 +84,7 @@ public:
         Scheduler::register_task(100000, +[](){
             DataPackets::control_station_udp->send_packet(*DataPackets::Current_State_packet);
             });
+#endif
     }
 
 
