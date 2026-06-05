@@ -190,12 +190,12 @@ static void bcc_get_measurements() {
 
   /* Content of CC registers (raw values only).
    * CC registers resets on read. */
-  int32_t coulomb_counter = 
+  LV_BMS::battery[0].coulomb_counter = 
     BCC_GET_COULOMB_CNT(measurements[BCC_MSR_COULOMB_CNT1],
                         measurements[BCC_MSR_COULOMB_CNT2]);
 
 #if 0
-  // NOTE: We don't use isense for LV-BMS
+  // NOTE: We don't use isense for LV-BMS ?????
   int32_t isense_microvolts =
     BCC_GET_ISENSE_VOLT(measurements[BCC_MSR_ISENSE1],
                         measurements[BCC_MSR_ISENSE2]);
@@ -208,49 +208,31 @@ static void bcc_get_measurements() {
 #endif
 
   /* In micro volts */
-  uint32_t stack_voltage = BCC_GET_STACK_VOLT(measurements[BCC_MSR_STACK_VOLT]);
+  LV_BMS::battery[0].stack_voltage = BCC_GET_STACK_VOLT(measurements[BCC_MSR_STACK_VOLT]);
+  LV_BMS::battery[0].cell_voltage[0] = BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT1]);
+  LV_BMS::battery[0].cell_voltage[1] = BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT2]);
+  LV_BMS::battery[0].cell_voltage[2] = BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT3]);
+  LV_BMS::battery[0].cell_voltage[3] = BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT4]);
+  LV_BMS::battery[0].cell_voltage[4] = BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT5]);
+  LV_BMS::battery[0].cell_voltage[5] = BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT6]);
 
-  uint32_t cell1_voltage = BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT1]);
-  uint32_t cell2_voltage = BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT2]);
-  uint32_t cell3_voltage = BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT3]);
-  uint32_t cell4_voltage = BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT4]);
-  uint32_t cell5_voltage = BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT5]);
-  uint32_t cell6_voltage = BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT6]);
-
-  uint16_t analog1 = measurements[BCC_MSR_AN1];
-  //uint16_t analog2 = measurements[BCC_MSR_AN2]; /* I don't think this one is useful for MC33772C (?) */
-  uint16_t analog3 = measurements[BCC_MSR_AN3];
-  uint16_t analog4 = measurements[BCC_MSR_AN4];
-  uint16_t analog5 = measurements[BCC_MSR_AN5];
-  uint16_t analog6 = measurements[BCC_MSR_AN6];
+  /* NOTE: In MC33772C analog0 and analog2 are not useful */
+  //LV_BMS::battery[0].analog_input[0] = measurements[BCC_MSR_AN0];
+  LV_BMS::battery[0].analog_input[1] = measurements[BCC_MSR_AN1];
+  //LV_BMS::battery[0].analog_input[2] = measurements[BCC_MSR_AN2];
+  LV_BMS::battery[0].analog_input[3] = measurements[BCC_MSR_AN3];
+  LV_BMS::battery[0].analog_input[4] = measurements[BCC_MSR_AN4];
+  LV_BMS::battery[0].analog_input[5] = measurements[BCC_MSR_AN5];
+  LV_BMS::battery[0].analog_input[6] = measurements[BCC_MSR_AN6];
 
   /* IC temperature measurement in ºC*10 */
-  int32_t temp_times_ten = BCC_GET_IC_TEMP_C(measurements[BCC_MSR_ICTEMP]);
+  LV_BMS::battery[0].temp_times_ten = BCC_GET_IC_TEMP_C(measurements[BCC_MSR_ICTEMP]);
+  // NOTE: This division might be too slow
+  LV_BMS::battery[0].temperature = (float)LV_BMS::battery[0].temp_times_ten / 10.0f;
 
   /* ADCIA and ADCIB Band Gap Reference measurements, in micro volts */
-  uint32_t ADCIA_v = BCC_GET_VOLT(measurements[BCC_MSR_VBGADC1A]);
-  uint32_t ADCIB_v = BCC_GET_VOLT(measurements[BCC_MSR_VBGADC1B]);
-
-  (void)coulomb_counter;
-  (void)stack_voltage;
-
-  (void)cell1_voltage;
-  (void)cell2_voltage;
-  (void)cell3_voltage;
-  (void)cell4_voltage;
-  (void)cell5_voltage;
-  (void)cell6_voltage;
-
-  (void)analog1;
-  //(void)analog2;
-  (void)analog3;
-  (void)analog4;
-  (void)analog5;
-  (void)analog6;
-
-  (void)temp_times_ten;
-  (void)ADCIA_v;
-  (void)ADCIB_v;
+  LV_BMS::battery[0].ADCIA_volts = BCC_GET_VOLT(measurements[BCC_MSR_VBGADC1A]);
+  LV_BMS::battery[0].ADCIB_volts = BCC_GET_VOLT(measurements[BCC_MSR_VBGADC1B]);
 
   bcc_start_measurements();
 }
@@ -300,7 +282,9 @@ void FaultState_OnEnter(void)
 
 //---------------------------------------------------------------
 
-void LV_BMS::init() {
+void lvbms_init_comms(void)
+{
+#if LV_BMS_VERSION_MAJOR == 10
   /* Comms init */ {
     DataPackets::Battery_Voltages_init(
       battery[0].cells[0], battery[0].cells[1], battery[0].cells[2],
@@ -317,7 +301,29 @@ void LV_BMS::init() {
 
     DataPackets::Current_State_init(state);
   }
+#else
+  /* Comms init */ {
+    DataPackets::Battery_Voltages_init(
+      LV_BMS::battery[0].cell_voltage[0], LV_BMS::battery[0].cell_voltage[1],
+      LV_BMS::battery[0].cell_voltage[2], LV_BMS::battery[0].cell_voltage[3],
+      LV_BMS::battery[0].cell_voltage[4], LV_BMS::battery[0].cell_voltage[5], 
+      LV_BMS::min_cell, LV_BMS::max_cell, LV_BMS::total_voltage
+    );
+
+    DataPackets::Battery_Temperatures_init(LV_BMS::battery[0].temperature);
+
+    DataPackets::State_of_Charge_init(LV_BMS::SOC);
+    // NOTE: This value is not updated
+    DataPackets::Battery_Current_init(LV_BMS::current);
+
+    DataPackets::Current_State_init(LV_BMS::state);
+  }
+#endif
   DataPackets::start();
+}
+
+void LV_BMS::init() {
+  lvbms_init_comms();
 
   OrderPackets::Brake_init();
   OrderPackets::start();
@@ -371,6 +377,7 @@ float LV_BMS::coulomb_counting_SOC(float current) {
 }
 
 float LV_BMS::ocv_battery_SOC() {
+#if LV_BMS_VERSION_MAJOR == 10
   float total_voltage = battery[0].cells[0] + battery[0].cells[1] + battery[0].cells[2] +
                         battery[0].cells[3] + battery[0].cells[4] + battery[0].cells[5];
   float x =
@@ -378,6 +385,12 @@ float LV_BMS::ocv_battery_SOC() {
                            // the polynomial is more accurate
   float result = -62.5 + (14.9 * x) + (21.9 * x * x) + (-4.18 * x * x * x);
   return result;
+#else
+  return 0;
+  //float total_voltage = battery[0].cell_voltage[0] + battery[0].cell_voltage[1] + 
+  //                      battery[0].cell_voltage[2] + battery[0].cell_voltage[3] + 
+  //                      battery[0].cell_voltage[4] + battery[0].cell_voltage[5];
+#endif
 }
 
 void LV_BMS::update_SOC() {
@@ -404,17 +417,26 @@ void LV_BMS::update_SOC() {
 void LV_BMS::get_max_min_cells() {
   float maximum = FLT_MIN;
   float minimum = FLT_MAX;
+#if LV_BMS_VERSION_MAJOR == 10
   for(unsigned int i = 0; i < ARRAY_LENGTH(LV_BMS::battery[0].cells); i++) {
     float v = LV_BMS::battery[0].cells[i];
     maximum = std::max(v, maximum);
     minimum = std::min(v, minimum);
   }
+#else
+  for(unsigned int i = 0; i < ARRAY_LENGTH(LV_BMS::battery[0].cell_voltage); i++) {
+    float v = LV_BMS::battery[0].cell_voltage[i];
+    maximum = std::max(v, maximum);
+    minimum = std::min(v, minimum);
+  }
+#endif
 
   max_cell = maximum;
   min_cell = minimum;
 }
 
-void LV_BMS::get_max_min_temperatures() {
+#if LV_BMS_VERSION_MAJOR == 10
+void get_max_min_temperatures() {
   float maximum = FLT_MIN;
   float minimum = FLT_MAX;
   for(unsigned int i = 0; i < ARRAY_LENGTH(LV_BMS::temperature); i++) {
@@ -426,6 +448,10 @@ void LV_BMS::get_max_min_temperatures() {
   max_temperature = maximum;
   min_temperature = minimum;
 }
+#else
+// NOTE: H11 only has one temperature measurement
+#define get_max_min_temperatures()
+#endif
 
 void LV_BMS::read() {
   update_SOC();

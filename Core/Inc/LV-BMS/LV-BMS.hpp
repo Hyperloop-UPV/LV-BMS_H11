@@ -74,20 +74,44 @@ struct LV_BMS {
   static inline bcc_drv_config_t bcc_config{};
 
   struct BatteryData {
-    float cells[6];
+    /* in microvolts (x10^-6 V) */
+    uint32_t cell_voltage[6];
+    /* in microvolts (x10^-6 V) */
+    uint32_t stack_voltage;
+
+    /* NOTE: Will have to do stuff with this to get the SOC */
+    int32_t coulomb_counter;
+
+    /* Analog inputs measurements.
+     * MC33771C TPL: Temperature measurements at all GPIOx pins.
+     * MC33771C SPI: Temperature measurements at GPIO1 and GPIO3-6 pins.
+     * MC33772C TPL: Temperature measurements at GPIO0-4 pins and
+     *               Voltage measurement at GPIO5 and GPIO6.
+     *
+     *  v v v v v v v
+     * MC33772C SPI: Temperature measurements at GPIO1, GPIO3, GPIO4 pins and
+     *               Voltage measurement at GPIO5 and GPIO6. */
+    uint16_t analog_input[8];
+
+    /* IC temperature measurement in ºC*10 */
+    int32_t temp_times_ten;
+    /* in ºC */
+    float temperature;
+
+    /* Band Gap Reference measurements, in microvolts (x10^-6 V) */
+    uint32_t ADCIA_volts;
+    /* Band Gap Reference measurements, in microvolts (x10^-6 V) */
+    uint32_t ADCIB_volts;
   };
 
   static inline float SOC{50.0f};
 
   static inline float current{};
 
-  static inline float min_cell{};
-  static inline float max_cell{};
+  static inline uint32_t min_cell{};
+  static inline uint32_t max_cell{};
 
   static inline float total_voltage{};
-
-  static inline float min_temperature{};
-  static inline float max_temperature{};
 
   static inline BatteryData battery[1]{};
   static inline float temperature[4]{};

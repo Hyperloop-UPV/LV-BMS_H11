@@ -13,14 +13,14 @@ public:
     };
     
 
-    static void Battery_Voltages_init(float &cell_1, float &cell_2, float &cell_3, float &cell_4, float &cell_5, float &cell_6, float &voltage_min, float &voltage_max, float &total_voltage)
+    static void Battery_Voltages_init(uint32_t &cell_1, uint32_t &cell_2, uint32_t &cell_3, uint32_t &cell_4, uint32_t &cell_5, uint32_t &cell_6, uint32_t &voltage_min, uint32_t &voltage_max, float &total_voltage)
     {
         Battery_Voltages_packet = new HeapPacket(static_cast<uint16_t>(777), &cell_1, &cell_2, &cell_3, &cell_4, &cell_5, &cell_6, &voltage_min, &voltage_max, &total_voltage);
     }
 
-    static void Battery_Temperatures_init(float &temperature_1, float &temperature_2, float &temperature_3, float &temperature_4, float &temperature_min, float &temperature_max)
+    static void Battery_Temperatures_init(float &temperature_1)
     {
-        Battery_Temperatures_packet = new HeapPacket(static_cast<uint16_t>(778), &temperature_1, &temperature_2, &temperature_3, &temperature_4, &temperature_min, &temperature_max);
+        Battery_Temperatures_packet = new HeapPacket(static_cast<uint16_t>(778), &temperature_1);
     }
 
     static void State_of_Charge_init(float &SOC)
@@ -44,37 +44,31 @@ public:
     inline static HeapPacket *State_of_Charge_packet{nullptr};
     inline static HeapPacket *Battery_Current_packet{nullptr};
     inline static HeapPacket *Current_State_packet{nullptr};
-
-#if STLIB_ETH
+    
     inline static DatagramSocket *control_station_udp{nullptr};
-#else
-    inline static void *control_station_udp{nullptr};
-#endif
-
+    
 
     static void start()
     {
         if (Battery_Voltages_packet == nullptr) {
-            FAULT("Packet Battery_Voltages not initialized");
+            PANIC("Packet Battery_Voltages not initialized");
         }
         if (Battery_Temperatures_packet == nullptr) {
-            FAULT("Packet Battery_Temperatures not initialized");
+            PANIC("Packet Battery_Temperatures not initialized");
         }
         if (State_of_Charge_packet == nullptr) {
-            FAULT("Packet State_of_Charge not initialized");
+            PANIC("Packet State_of_Charge not initialized");
         }
         if (Battery_Current_packet == nullptr) {
-            FAULT("Packet Battery_Current not initialized");
+            PANIC("Packet Battery_Current not initialized");
         }
         if (Current_State_packet == nullptr) {
-            FAULT("Packet Current_State not initialized");
+            PANIC("Packet Current_State not initialized");
         }
         
-#if STLIB_ETH
-        control_station_udp = new DatagramSocket("192.168.1.11",50400,"192.168.0.9",50400);
-#endif
 
-#if STLIB_ETH
+        control_station_udp = new DatagramSocket("192.168.1.11",50400,"192.168.0.9",50400);
+        
         Scheduler::register_task(16670, +[](){
             DataPackets::control_station_udp->send_packet(*DataPackets::Battery_Voltages_packet);
             DataPackets::control_station_udp->send_packet(*DataPackets::Battery_Temperatures_packet);
@@ -84,7 +78,6 @@ public:
         Scheduler::register_task(100000, +[](){
             DataPackets::control_station_udp->send_packet(*DataPackets::Current_State_packet);
             });
-#endif
     }
 
 
