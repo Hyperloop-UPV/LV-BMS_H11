@@ -4,3 +4,6 @@
 [submodule "deps/LTC6810-Driver"]
 	path = deps/LTC6810-Driver
 	url = https://github.com/Hyperloop-UPV/LTC6810-Driver.git
+[submodule "deps/ST-LIB"]
+	path = deps/ST-LIB
+	url = https://github.com/Hyperloop-UPV/ST-LIB.git

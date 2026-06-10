@@ -33,6 +33,7 @@ int main(void) {
   global_tick_timer->ARR = UINT32_MAX;
   global_tick_timer_wrapper.counter_enable();
 
+#ifdef TEST_UART
 #ifdef SCHEDULER_GET_LAST_N_TASKS
   UART::Peripheral *uart = &UART::uart1;
   if(!Scheduler::init_perf(global_tick_timer, uart)) {
@@ -54,6 +55,7 @@ int main(void) {
   )) {
     WARNING("UART Error while trying to transmit timing info");
   }
+#endif
 
 #if LV_BMS_VERSION_MAJOR == 11
   // setup timeout timer
