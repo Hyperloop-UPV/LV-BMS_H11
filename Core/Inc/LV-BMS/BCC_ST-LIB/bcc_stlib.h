@@ -203,12 +203,29 @@ void BCC_MCU_WaitUs(uint32_t delay)
   // NOTE: Assume the counter for the timer has started
   // NOTE: This also assumes the timer is counting in microseconds per CNT step
   // BCC_MCU_Assert((global_tick_timer->CR1 & TIM_CR1_CEN) != 0);
+#if 0
   uint32_t start = global_tick_timer->CNT;
   uint32_t end = start + delay;
   if(start > end) [[unlikely]] {
     while(global_tick_timer->CNT > end) /* wait */;
   }
   while(global_tick_timer->CNT < end) /* wait */;
+#else
+  uint32_t count = delay * 48*4;  // Approximately 400/6 ≈ 67
+
+  __asm volatile (
+    "1:                     \n"
+    "subs   %0, %0, #1      \n"
+    "nop                    \n"
+    "nop                    \n"
+    "nop                    \n"
+    "nop                    \n"
+    "bne    1b              \n"
+    : "+r" (count)
+    :
+    : "cc"
+  );
+#endif
 }
 
 bcc_status_t BCC_MCU_StartTimeout(uint32_t timeoutUs)
