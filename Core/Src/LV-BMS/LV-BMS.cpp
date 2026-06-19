@@ -128,6 +128,9 @@ static inline bool bcc_start_measurements() {
 
 static void Init_BCC_Driver()
 {
+  // turn on rst for wakeup
+  BCC_MCU_WriteRstPin(0, true);
+
   LV_BMS::bcc_config.drvInstance = 0U;
   LV_BMS::bcc_config.commMode = BCC_MODE_SPI;
   LV_BMS::bcc_config.devicesCnt = 1U;

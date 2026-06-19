@@ -77,7 +77,6 @@ int main(void) {
   spi_wrapper = &spi_wrapper_internal;
   spi_cs = &lvBMS_Board::instance_of<spi_cs_def>();
   bms_rst = &lvBMS_Board::instance_of<bms_rst_def>();
-  bms_rst->turn_on();
 
   LV_BMS::init();
   LV_BMS::start();

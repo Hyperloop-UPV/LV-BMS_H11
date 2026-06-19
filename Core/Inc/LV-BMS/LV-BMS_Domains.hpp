@@ -86,7 +86,7 @@ inline constexpr auto spi_def =
   ST_LIB::SPIDomain::Device<ST_LIB::DMA_Domain::Stream::dma1_stream5, 
                             ST_LIB::DMA_Domain::Stream::dma1_stream6>(
     ST_LIB::SPIDomain::SPIMode::MASTER, 
-    ST_LIB::SPIDomain::SPIPeripheral::spi5, 1000000, 
+    ST_LIB::SPIDomain::SPIPeripheral::spi5, 2000000,
     ST_LIB::PF7, ST_LIB::PF8, ST_LIB::PF11, get_spi_config());
 
 #endif

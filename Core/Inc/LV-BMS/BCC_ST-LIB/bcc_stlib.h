@@ -203,7 +203,7 @@ void BCC_MCU_WaitUs(uint32_t delay)
   // NOTE: Assume the counter for the timer has started
   // NOTE: This also assumes the timer is counting in microseconds per CNT step
   // BCC_MCU_Assert((global_tick_timer->CR1 & TIM_CR1_CEN) != 0);
-#if 0
+#if 1
   uint32_t start = global_tick_timer->CNT;
   uint32_t end = start + delay;
   if(start > end) [[unlikely]] {
