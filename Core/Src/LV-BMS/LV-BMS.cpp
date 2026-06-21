@@ -116,11 +116,104 @@ static bcc_status_t Clear_BCC_FaultRegisters()
   return BCC_STATUS_SUCCESS;
 }
 
+uint64_t failCountStart = 0;
+bcc_status_t failStartStatuses[256];
+
+uint64_t failCountGetRawValues = 0;
+bcc_status_t failGetRawValuesStatuses[256];
+
+#define BCC_STATUS_FAIL_REASON_COUNT (BCC_STATUS_TIMEOUT_START + 1)
+
+static void bcc_info_failiures() {
+  uint8_t fail_start_reason_count[BCC_STATUS_FAIL_REASON_COUNT] = {};
+  uint8_t fail_rawvals_reason_count[BCC_STATUS_FAIL_REASON_COUNT] = {};
+
+  for(uint32_t i = 0; i < ARRAY_LENGTH(failStartStatuses); i++) {
+    fail_start_reason_count[failStartStatuses[i]]++;
+  }
+  for(uint32_t i = 0; i < ARRAY_LENGTH(failGetRawValuesStatuses); i++) {
+    fail_rawvals_reason_count[failGetRawValuesStatuses[i]]++;
+  }
+
+  static constexpr int BUFSIZE = 2048;
+  char buf[BUFSIZE];
+  size_t bufidx = 0;
+
+  for(uint8_t i = 0; i < BCC_STATUS_FAIL_REASON_COUNT; i++) {
+    const char *str1 = "Failed ";
+    size_t len1 = strlen(str1);
+    
+    const char *str2;
+    size_t len2;
+
+    const char *str3 = get_bcc_error_string((bcc_status_t)i);
+    size_t len3 = strlen(str3);
+
+    if(fail_start_reason_count[i] > 0) {
+      buf[bufidx++] = '\n';
+
+      str2 = " times at start for reason";
+      len2 = strlen(str2);
+
+      if(bufidx + len1 + 4 + len2 + len3 > BUFSIZE) {
+        break;
+      }
+      memcpy(&buf[bufidx], str1, len1);
+      bufidx += len1;
+
+      char numbuf[3];
+      numbuf[2] = '0' + fail_start_reason_count[i] % 10;
+      numbuf[1] = '0' + (fail_start_reason_count[i] % 100) / 10;
+      numbuf[0] = '0' + fail_start_reason_count[i] / 100;
+      if(numbuf[0] > '9') numbuf[0] = '?';
+      memcpy(&buf[bufidx], numbuf, 3);
+      bufidx += 3;
+
+      memcpy(&buf[bufidx], str2, len2);
+      bufidx += len2;
+
+      memcpy(&buf[bufidx], str3, len3);
+      bufidx += len3;
+    }
+
+    if(fail_rawvals_reason_count[i] > 0) {
+      buf[bufidx++] = '\n';
+
+      str2 = " times at getting values for reason";
+      len2 = strlen(str2);
+
+      if(bufidx + len1 + 4 + len2 + len3 > BUFSIZE) {
+        break;
+      }
+      memcpy(&buf[bufidx], str1, len1);
+      bufidx += len1;
+
+      char numbuf[3];
+      numbuf[2] = '0' + fail_rawvals_reason_count[i] % 10;
+      numbuf[1] = '0' + (fail_rawvals_reason_count[i] % 100) / 10;
+      numbuf[0] = '0' + fail_rawvals_reason_count[i] / 100;
+      if(numbuf[0] > '9') numbuf[0] = '?';
+      memcpy(&buf[bufidx], numbuf, 3);
+      bufidx += 3;
+
+      memcpy(&buf[bufidx], str2, len2);
+      bufidx += len2;
+
+      memcpy(&buf[bufidx], str3, len3);
+      bufidx += len3;
+    }
+
+    buf[bufidx] = '\0';
+  }
+}
+
 static inline bool bcc_start_measurements() {
   bcc_status_t status = 
     BCC_Meas_StartConversion(&LV_BMS::bcc_config, (bcc_cid_t)1, BCC_AVG_1);
   if(status != BCC_STATUS_SUCCESS) {
-    WARNING("Could not start bcc measurements: %s", get_bcc_error_str(status));
+    failStartStatuses[failCountStart++] = status;
+    failCountStart = failCountStart % ARRAY_LENGTH(failStartStatuses);
+    // WARNING("Could not start bcc measurements: %s", get_bcc_error_string(status));
     return false;
   }
   return true;
@@ -136,33 +229,51 @@ static void Init_BCC_Driver()
   LV_BMS::bcc_config.devicesCnt = 1U;
   LV_BMS::bcc_config.device[0] = BCC_DEVICE_MC33772C;
   LV_BMS::bcc_config.cellCnt[0] = 6U;
+
+#if 0
+  bcc_status_t status = BCC_STATUS_COM_ECHO;
+  int countfail = -1;
+  while(status != BCC_STATUS_SUCCESS && status != BCC_STATUS_COM_NULL) {
+    __disable_irq();
+    status = BCC_Init(&LV_BMS::bcc_config);
+    __enable_irq();
+    countfail++;
+  }
+
+  if(countfail > 0) {
+    WARNING("Failed to do bcc init %d times", countfail);
+  }
+#else
+  __disable_irq();
   bcc_status_t status = BCC_Init(&LV_BMS::bcc_config);
-  if(status != BCC_STATUS_SUCCESS) {
-    FAULT("Could not init BCC: %s", get_bcc_error_str(status));
+  __enable_irq();
+  if(status != BCC_STATUS_SUCCESS && status != BCC_STATUS_COM_NULL) {
+    FAULT("Could not init BCC: %s", get_bcc_error_string(status));
     return;
   }
+#endif
 
   status = Init_BCC_Registers();
   if(status != BCC_STATUS_SUCCESS) {
     FAULT("Could not init BCC registers: %s", 
-                 get_bcc_error_str(status));
+                 get_bcc_error_string(status));
     return;
   }
 
   status = Clear_BCC_FaultRegisters();
   if(status != BCC_STATUS_SUCCESS) {
     FAULT("Could not clear BCC fault registers: %s", 
-                 get_bcc_error_str(status));
+                 get_bcc_error_string(status));
     return;
   }
 
   uint64_t guid;
   status = BCC_GUID_Read(&LV_BMS::bcc_config, (bcc_cid_t)1, &guid);
   if(status != BCC_STATUS_SUCCESS) {
-    WARNING("Could not read device guid: %s", get_bcc_error_str(status));
+    WARNING("Could not read device guid: %s", get_bcc_error_string(status));
     return;
   } else {
-    INFO("BCC device guid: %02X%04X%04X",
+    INFO("BCC device guid: %02X:%04X:%04X",
         (uint16_t)((guid >> 32) & 0x001FU),
         (uint16_t)((guid >> 16) & 0xFFFFU),
         (uint16_t)(guid & 0xFFFFU));
@@ -180,12 +291,15 @@ static void bcc_get_measurements() {
   status = BCC_Meas_IsConverting(&LV_BMS::bcc_config, (bcc_cid_t)1, &completed);
   if(!completed) {
     // Wait until next call
+    INFO("bcc is still converting, skipping this measurement");
     return;
   }
 
   status = BCC_Meas_GetRawValues(&LV_BMS::bcc_config, (bcc_cid_t)1, measurements);
   if(status != BCC_STATUS_SUCCESS) {
-    WARNING("Could not get bcc measurements: %s", get_bcc_error_str(status));
+    failGetRawValuesStatuses[failCountGetRawValues++] = status;
+    failCountGetRawValues = failCountGetRawValues % ARRAY_LENGTH(failGetRawValuesStatuses);
+    // WARNING("Could not get bcc measurements: %s", get_bcc_error_string(status));
     return;
   }
 
@@ -337,6 +451,7 @@ void LV_BMS::init() {
   });
 #elif LV_BMS_VERSION_MAJOR == 11
   Init_BCC_Driver();
+  Scheduler::register_task(1000'000, bcc_info_failiures);
 #endif
 
   //LV_BMS::add_protections();
@@ -347,21 +462,6 @@ void LV_BMS::start() {
   last_reading_time = HAL_GetTick();
 
   FaultController::start();
-  Scheduler::register_task(1000, []() {
-    BMS_State prev_state = LV_BMS::state;
-    FaultController::check_transitions();
-    if(FaultController::is_faulted()) {
-      LV_BMS::state = BMS_State::FAULT;
-    } else {
-      LV_BMS::state = LV_BMS_SM::State_Machine.get_current_state();
-    }
-    if(LV_BMS::state != prev_state) [[unlikely]] {
-#if STLIB_ETH
-      DataPackets::control_station_udp->send_packet(*DataPackets::Current_State_packet);
-#endif
-    }
-  });
-
   Scheduler::register_task(100'000, []() {
     read();
   });

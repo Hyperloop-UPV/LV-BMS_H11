@@ -136,7 +136,7 @@ uint32_t BCC_MCU_ReadIntbPin(const uint8_t drvInstance);
 
 #ifdef BCC_STLIB_IMPLEMENTATION
 
-const char *get_bcc_error_str(bcc_status_t status)
+const char *get_bcc_error_string(bcc_status_t status)
 {
   switch(status) {
     case BCC_STATUS_SUCCESS:
@@ -203,7 +203,7 @@ void BCC_MCU_WaitUs(uint32_t delay)
   // NOTE: Assume the counter for the timer has started
   // NOTE: This also assumes the timer is counting in microseconds per CNT step
   // BCC_MCU_Assert((global_tick_timer->CR1 & TIM_CR1_CEN) != 0);
-#if 1
+#if 0
   uint32_t start = global_tick_timer->CNT;
   uint32_t end = start + delay;
   if(start > end) [[unlikely]] {
@@ -273,10 +273,10 @@ void BCC_MCU_WriteRstPin(const uint8_t drvInstance, const uint8_t value)
   // NOTE: this should actually be handled in hv bms (@Jorge_Canut)
   if(value == 0) {
     bms_rst->turn_off();
-    HAL_Delay(10);
+    BCC_MCU_WaitMs(10);
   } else {
     bms_rst->turn_on();
-    HAL_Delay(10);
+    BCC_MCU_WaitMs(10);
   }
 }
 
