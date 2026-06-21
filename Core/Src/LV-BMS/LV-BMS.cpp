@@ -205,6 +205,10 @@ static void bcc_info_failiures() {
 
     buf[bufidx] = '\0';
   }
+
+  if(bufidx > 0) {
+    WARNING(&buf[0]);
+  }
 }
 
 static inline bool bcc_start_measurements() {
