@@ -307,8 +307,6 @@ static void bcc_get_measurements() {
     return;
   }
 
-  // TODO: Store these measurements
-
   /* Content of CC registers (raw values only).
    * CC registers resets on read. */
   LV_BMS::battery[0].coulomb_counter = 
@@ -355,7 +353,7 @@ static void bcc_get_measurements() {
   LV_BMS::battery[0].ADCIA_volts = BCC_GET_VOLT(measurements[BCC_MSR_VBGADC1A]);
   LV_BMS::battery[0].ADCIB_volts = BCC_GET_VOLT(measurements[BCC_MSR_VBGADC1B]);
 
-  bcc_start_measurements();
+  // bcc_start_measurements();
 }
 
 // end LV_BMS_VERSION_MAJOR == 11
