@@ -2,6 +2,8 @@
 # |        General        |
 # *-----------------------*
 
+Core/Src/Runes/generated_metadata.cpp
+
 # Python
 __pycache__/
 virtual/
