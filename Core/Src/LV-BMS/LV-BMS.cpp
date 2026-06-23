@@ -328,6 +328,7 @@ static void bcc_get_measurements() {
 
   /* In micro volts */
   LV_BMS::battery[0].stack_voltage = BCC_GET_STACK_VOLT(measurements[BCC_MSR_STACK_VOLT]);
+
   LV_BMS::battery[0].cell_voltage[0] = BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT1]);
   LV_BMS::battery[0].cell_voltage[1] = BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT2]);
   LV_BMS::battery[0].cell_voltage[2] = BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT3]);
@@ -353,7 +354,7 @@ static void bcc_get_measurements() {
   LV_BMS::battery[0].ADCIA_volts = BCC_GET_VOLT(measurements[BCC_MSR_VBGADC1A]);
   LV_BMS::battery[0].ADCIB_volts = BCC_GET_VOLT(measurements[BCC_MSR_VBGADC1B]);
 
-  // bcc_start_measurements();
+  bcc_start_measurements();
 }
 
 // end LV_BMS_VERSION_MAJOR == 11
@@ -421,15 +422,17 @@ void lvbms_init_comms(void)
     DataPackets::Current_State_init(state);
   }
 #else
+  auto battery = &LV_BMS::battery[0];
+
   /* Comms init */ {
     DataPackets::Battery_Voltages_init(
-      LV_BMS::battery[0].cell_voltage[0], LV_BMS::battery[0].cell_voltage[1],
-      LV_BMS::battery[0].cell_voltage[2], LV_BMS::battery[0].cell_voltage[3],
-      LV_BMS::battery[0].cell_voltage[4], LV_BMS::battery[0].cell_voltage[5], 
+      battery->cell_voltage[0], battery->cell_voltage[1],
+      battery->cell_voltage[2], battery->cell_voltage[3],
+      battery->cell_voltage[4], battery->cell_voltage[5], 
       LV_BMS::min_cell, LV_BMS::max_cell, LV_BMS::total_voltage
     );
 
-    DataPackets::Battery_Temperatures_init(LV_BMS::battery[0].temperature);
+    DataPackets::Battery_Temperatures_init(battery->temperature);
 
     DataPackets::State_of_Charge_init(LV_BMS::SOC);
     // NOTE: This value is not updated
