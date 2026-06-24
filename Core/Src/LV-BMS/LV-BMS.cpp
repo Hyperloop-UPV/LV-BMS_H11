@@ -327,14 +327,14 @@ static void bcc_get_measurements() {
 #endif
 
   /* In micro volts */
-  LV_BMS::battery[0].stack_voltage = BCC_GET_STACK_VOLT(measurements[BCC_MSR_STACK_VOLT]);
+  LV_BMS::battery[0].stack_voltage = (float)BCC_GET_STACK_VOLT(measurements[BCC_MSR_STACK_VOLT]) / 1'000'000.0f;
 
-  LV_BMS::battery[0].cell_voltage[0] = BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT1]);
-  LV_BMS::battery[0].cell_voltage[1] = BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT2]);
-  LV_BMS::battery[0].cell_voltage[2] = BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT3]);
-  LV_BMS::battery[0].cell_voltage[3] = BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT4]);
-  LV_BMS::battery[0].cell_voltage[4] = BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT5]);
-  LV_BMS::battery[0].cell_voltage[5] = BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT6]);
+  LV_BMS::battery[0].cell_voltage[0] = (float)BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT1]) / 1'000'000.0f;
+  LV_BMS::battery[0].cell_voltage[1] = (float)BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT2]) / 1'000'000.0f;
+  LV_BMS::battery[0].cell_voltage[2] = (float)BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT3]) / 1'000'000.0f;
+  LV_BMS::battery[0].cell_voltage[3] = (float)BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT4]) / 1'000'000.0f;
+  LV_BMS::battery[0].cell_voltage[4] = (float)BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT5]) / 1'000'000.0f;
+  LV_BMS::battery[0].cell_voltage[5] = (float)BCC_GET_VOLT(measurements[BCC_MSR_CELL_VOLT6]) / 1'000'000.0f;
 
   /* NOTE: In MC33772C analog0 and analog2 are not useful */
   //LV_BMS::battery[0].analog_input[0] = measurements[BCC_MSR_AN0];
@@ -351,8 +351,8 @@ static void bcc_get_measurements() {
   LV_BMS::battery[0].temperature = (float)LV_BMS::battery[0].temp_times_ten / 10.0f;
 
   /* ADCIA and ADCIB Band Gap Reference measurements, in micro volts */
-  LV_BMS::battery[0].ADCIA_volts = BCC_GET_VOLT(measurements[BCC_MSR_VBGADC1A]);
-  LV_BMS::battery[0].ADCIB_volts = BCC_GET_VOLT(measurements[BCC_MSR_VBGADC1B]);
+  LV_BMS::battery[0].ADCIA_volts = (float)BCC_GET_VOLT(measurements[BCC_MSR_VBGADC1A]) / 1'000'000.0f;
+  LV_BMS::battery[0].ADCIB_volts = (float)BCC_GET_VOLT(measurements[BCC_MSR_VBGADC1B]) / 1'000'000.0f;
 
   bcc_start_measurements();
 }
@@ -429,7 +429,8 @@ void lvbms_init_comms(void)
       battery->cell_voltage[0], battery->cell_voltage[1],
       battery->cell_voltage[2], battery->cell_voltage[3],
       battery->cell_voltage[4], battery->cell_voltage[5], 
-      LV_BMS::min_cell, LV_BMS::max_cell, LV_BMS::total_voltage
+      LV_BMS::min_cell, LV_BMS::max_cell, LV_BMS::total_voltage,
+      LV_BMS::avg_cell
     );
 
     DataPackets::Battery_Temperatures_init(battery->temperature);
@@ -494,10 +495,15 @@ float LV_BMS::ocv_battery_SOC() {
   float result = -62.5 + (14.9 * x) + (21.9 * x * x) + (-4.18 * x * x * x);
   return result;
 #else
-  return 0;
-  //float total_voltage = battery[0].cell_voltage[0] + battery[0].cell_voltage[1] + 
-  //                      battery[0].cell_voltage[2] + battery[0].cell_voltage[3] + 
-  //                      battery[0].cell_voltage[4] + battery[0].cell_voltage[5];
+  static constexpr float max_voltage = 4.2f * 6;
+  LV_BMS::total_voltage = battery[0].cell_voltage[0] + battery[0].cell_voltage[1] + 
+                          battery[0].cell_voltage[2] + battery[0].cell_voltage[3] + 
+                          battery[0].cell_voltage[4] + battery[0].cell_voltage[5];
+  LV_BMS::avg_cell = LV_BMS::total_voltage / 6.0f;
+
+  // very stupid initial estimation without any data, will make better this evening probably
+  float soc = (LV_BMS::total_voltage / max_voltage)*(LV_BMS::total_voltage / max_voltage) * 100.0f;
+  return soc;
 #endif
 }
 
@@ -509,7 +515,7 @@ void LV_BMS::update_SOC() {
     if(std::abs(*current) < REST_THRESHOLD) {
       SOC += coulomb_counting_SOC(0 - *current);
     } else { */
-      SOC = ocv_battery_SOC();
+      LV_BMS::SOC = ocv_battery_SOC();
 #if LV_BMS_VERSION_MAJOR == 10
       if((SOC > -100.0f) && (SOC < 200.0f) && ((SOC < 20.0f) || (SOC > 80.0f))) [[unlikely]] {
         FAULT("Fault: LV battery State of charge not in range [20, 80]");

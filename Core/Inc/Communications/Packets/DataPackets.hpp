@@ -13,9 +13,9 @@ public:
     };
     
 
-    static void Battery_Voltages_init(uint32_t &cell_1, uint32_t &cell_2, uint32_t &cell_3, uint32_t &cell_4, uint32_t &cell_5, uint32_t &cell_6, uint32_t &voltage_min, uint32_t &voltage_max, float &total_voltage)
+    static void Battery_Voltages_init(float &cell_1, float &cell_2, float &cell_3, float &cell_4, float &cell_5, float &cell_6, float &voltage_min, float &voltage_max, float &total_voltage, float &average_voltage)
     {
-        Battery_Voltages_packet = new HeapPacket(static_cast<uint16_t>(777), &cell_1, &cell_2, &cell_3, &cell_4, &cell_5, &cell_6, &voltage_min, &voltage_max, &total_voltage);
+        Battery_Voltages_packet = new HeapPacket(static_cast<uint16_t>(777), &cell_1, &cell_2, &cell_3, &cell_4, &cell_5, &cell_6, &voltage_min, &voltage_max, &total_voltage, &average_voltage);
     }
 
     static void Battery_Temperatures_init(float &temperature_1)

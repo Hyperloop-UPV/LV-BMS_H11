@@ -74,10 +74,10 @@ struct LV_BMS {
   static inline bcc_drv_config_t bcc_config{};
 
   struct BatteryData {
-    /* in microvolts (x10^-6 V) */
-    uint32_t cell_voltage[6];
-    /* in microvolts (x10^-6 V) */
-    uint32_t stack_voltage;
+    /* in volts */
+    float cell_voltage[6];
+    /* in volts */
+    float stack_voltage;
 
     /* NOTE: Will have to do stuff with this to get the SOC */
     int32_t coulomb_counter;
@@ -98,18 +98,19 @@ struct LV_BMS {
     /* in ºC */
     float temperature;
 
-    /* Band Gap Reference measurements, in microvolts (x10^-6 V) */
-    uint32_t ADCIA_volts;
-    /* Band Gap Reference measurements, in microvolts (x10^-6 V) */
-    uint32_t ADCIB_volts;
+    /* Band Gap Reference measurements, in volts */
+    float ADCIA_volts;
+    /* Band Gap Reference measurements, in volts */
+    float ADCIB_volts;
   };
 
   static inline float SOC{50.0f};
 
   static inline float current{};
 
-  static inline uint32_t min_cell{};
-  static inline uint32_t max_cell{};
+  static inline float min_cell{};
+  static inline float max_cell{};
+  static inline float avg_cell{};
 
   static inline float total_voltage{};
 
