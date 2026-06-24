@@ -7,19 +7,31 @@
 
 class OrderPackets{
 public:
+    enum class measurement_averaging : uint8_t
+    {
+        AVG_1 = 0,
+        AVG_2 = 1,
+        AVG_4 = 2,
+        AVG_8 = 3,
+        AVG_16 = 4,
+        AVG_32 = 5,
+        AVG_64 = 6,
+        AVG_128 = 7,
+        AVG_256 = 8,
+    };
     
 
-    inline static bool Brake_flag{false};
+    inline static bool Averaging_flag{false};
     
 
     OrderPackets() = default;
 
-    inline static HeapOrder *Brake_order{nullptr};
+    inline static HeapOrder *Averaging_order{nullptr};
     
 
-    static void Brake_init()
+    static void Averaging_init(measurement_averaging &measurement_averaging)
     {
-        Brake_order = new HeapOrder(43, &Brake_cb);
+        Averaging_order = new HeapOrder(33772, &Averaging_cb, &measurement_averaging);
     }
     
 
@@ -29,8 +41,8 @@ public:
 
     static void start()
     {
-        if (Brake_order == nullptr) {
-            PANIC("Order Brake not initialized");
+        if (Averaging_order == nullptr) {
+            PANIC("Order Averaging not initialized");
         }
         
 
@@ -39,9 +51,9 @@ public:
     }
 
 private:
-    static void Brake_cb()
+    static void Averaging_cb()
     {
-        Brake_flag = true;
+        Averaging_flag = true;
     }
     
 };

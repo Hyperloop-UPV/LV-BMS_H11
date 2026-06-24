@@ -13,23 +13,6 @@
 TIM_TypeDef *global_tick_timer;
 extern ST_LIB::SPIDomain::SPIWrapper<spi_def> *spi_wrapper;
 
-void check_lvbms_transitions(void)
-{
-  BMS_State prev_state = LV_BMS::state;
-  FaultController::check_transitions();
-  if(FaultController::is_faulted()) {
-    LV_BMS::state = BMS_State::FAULT;
-  } else {
-    LV_BMS::state = LV_BMS_SM::State_Machine.get_current_state();
-  }
-
-  if(LV_BMS::state != prev_state) [[unlikely]] {
-#if STLIB_ETH
-    DataPackets::control_station_udp->send_packet(*DataPackets::Current_State_packet);
-#endif
-  }
-}
-
 int main(void) {
   Hard_fault_check();
 
@@ -102,8 +85,7 @@ int main(void) {
 #ifdef STLIB_ETH
     eth_instance->update();
 #endif
-    check_lvbms_transitions();
-    Scheduler::update();
+    LV_BMS::update();
     lvBMS_Board::evaluate_protections();
     Diagnostics::Hub::flush();
   }

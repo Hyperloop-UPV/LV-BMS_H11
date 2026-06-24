@@ -213,7 +213,7 @@ static void bcc_info_failiures() {
 
 static inline bool bcc_start_measurements() {
   bcc_status_t status = 
-    BCC_Meas_StartConversion(&LV_BMS::bcc_config, (bcc_cid_t)1, BCC_AVG_1);
+    BCC_Meas_StartConversion(&LV_BMS::bcc_config, (bcc_cid_t)1, LV_BMS::avg_count);
   if(status != BCC_STATUS_SUCCESS) {
     failStartStatuses[failCountStart++] = status;
     failCountStart = failCountStart % ARRAY_LENGTH(failStartStatuses);
@@ -448,7 +448,7 @@ void lvbms_init_comms(void)
 void LV_BMS::init() {
   lvbms_init_comms();
 
-  OrderPackets::Brake_init();
+  OrderPackets::Averaging_init(*(OrderPackets::measurement_averaging*)&LV_BMS::avg_count);
   OrderPackets::start();
 
 #if LV_BMS_VERSION_MAJOR == 10
@@ -580,4 +580,26 @@ void LV_BMS::read() {
 #endif
   get_max_min_cells();
   get_max_min_temperatures();
+}
+
+void check_lvbms_transitions(void)
+{
+  BMS_State prev_state = LV_BMS::state;
+  FaultController::check_transitions();
+  if(FaultController::is_faulted()) {
+    LV_BMS::state = BMS_State::FAULT;
+  } else {
+    LV_BMS::state = LV_BMS_SM::State_Machine.get_current_state();
+  }
+
+  if(LV_BMS::state != prev_state) [[unlikely]] {
+#if STLIB_ETH
+    DataPackets::control_station_udp->send_packet(*DataPackets::Current_State_packet);
+#endif
+  }
+}
+
+void LV_BMS::update() {
+  check_lvbms_transitions();
+  Scheduler::update();
 }

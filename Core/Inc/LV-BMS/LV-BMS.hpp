@@ -119,12 +119,16 @@ struct LV_BMS {
 
   // NOTE: For coulomb counting SOC (do I need this or does the library give me it?)
   static inline uint32_t last_reading_time{};
+
+  // static inline OrderPackets::measurement_averaging avg_count{};
+  static inline bcc_avg_t avg_count{BCC_AVG_1};
 #endif
 
   //////////////////////////////////////
 
   static void init();
   static void start();
+  static void update();
 
   static float coulomb_counting_SOC(float current);
   static float ocv_battery_SOC();
