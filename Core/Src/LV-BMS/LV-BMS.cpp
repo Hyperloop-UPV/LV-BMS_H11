@@ -140,7 +140,7 @@ static bcc_status_t Mask_BCC_UndesiredFaults()
                      MC33772C_FAULT_MASK1_CT_OV_FLT_MASK_1_F(1U) |
                      MC33772C_FAULT_MASK1_CT_UV_FLT_MASK_0_F(1U);
 #else
-    uint16_t value = 0xFFFF;
+    uint16_t value = 0x1FFF;
 #endif
 
     status = BCC_Reg_Write(&LV_BMS::bcc_config, (bcc_cid_t)cid, MC33772C_FAULT_MASK1_OFFSET, value);
