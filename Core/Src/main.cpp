@@ -14,8 +14,6 @@ TIM_TypeDef *global_tick_timer;
 extern ST_LIB::SPIDomain::SPIWrapper<spi_def> *spi_wrapper;
 
 int main(void) {
-  Hard_fault_check();
-
   lvBMS_Board::init();
 
 #ifdef STLIB_ETH

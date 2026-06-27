@@ -24,9 +24,9 @@ extern ST_LIB::DigitalOutputDomain::Instance *spi_cs;
 #define GetMicroseconds() global_tick_timer->CNT
 
 struct LV_BMS {
-  static inline ST_LIB::DigitalOutputDomain::Instance *operational_led;
-  static inline ST_LIB::DigitalOutputDomain::Instance *fault_led;
-  static inline ST_LIB::SPIDomain::Instance *spi_pins;
+  static inline ST_LIB::DigitalOutputDomain::Instance *operational_led{nullptr};
+  static inline ST_LIB::DigitalOutputDomain::Instance *fault_led{nullptr};
+  static inline ST_LIB::SPIDomain::Instance *spi_pins{nullptr};
 
   static inline BMS_State state{};
 
@@ -74,6 +74,8 @@ struct LV_BMS {
   static inline bcc_drv_config_t bcc_config{};
 
   struct BatteryData {
+    int32_t isense_microvolts;
+
     /* in volts */
     float cell_voltage[6];
     /* in volts */

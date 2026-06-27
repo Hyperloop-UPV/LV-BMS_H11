@@ -50,4 +50,15 @@
 #include "ip_bitmask.h"
 #define LVBMS_IP_MASK IP_BITMASK_CSTR
 
+#if LV_BMS_VERSION_MAJOR == 11
+/* in uOhms */
+#define LV_BMS_RSHUNT_RESISTANCE 500
+
+/* 8192 points */
+#define LV_BMS_OCV_POINTS (1 << 14)
+#define LV_BMS_MAX_VOLTAGE 4.2
+#define LV_BMS_MIN_VOLTAGE 2.5
+
+#endif
+
 #endif // DATA_HPP

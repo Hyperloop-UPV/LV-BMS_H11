@@ -116,6 +116,95 @@ static bcc_status_t Clear_BCC_FaultRegisters()
   return BCC_STATUS_SUCCESS;
 }
 
+bcc_status_t Enter_BCC_DiagnosticMode()
+{
+  bcc_status_t status = BCC_Reg_Update(&LV_BMS::bcc_config, (bcc_cid_t)1, MC33772C_SYS_CFG1_OFFSET, MC33772C_SYS_CFG1_GO2DIAG_MASK, MC33772C_SYS_CFG1_GO2DIAG_EXIT_ENUM_VAL);
+  return status;
+}
+
+bcc_status_t Exit_BCC_DiagnosticMode()
+{
+  bcc_status_t status = BCC_Reg_Update(&LV_BMS::bcc_config, (bcc_cid_t)1, MC33772C_SYS_CFG1_OFFSET, MC33772C_SYS_CFG1_GO2DIAG_MASK, MC33772C_SYS_CFG1_GO2DIAG_ENTER_ENUM_VAL);
+  return status;
+}
+
+static bcc_status_t Mask_BCC_UndesiredFaults()
+{
+  bcc_status_t status = BCC_STATUS_SUCCESS;
+
+  for(uint8_t cid = 1; cid <= LV_BMS::bcc_config.devicesCnt; cid++) {
+#if 0
+    uint16_t value = MC33772C_FAULT_MASK1_I2C_ERR_FLT_MASK_6_F(1U) |
+                     MC33772C_FAULT_MASK1_AN_OT_FLT_MASK_3_F(1U) |
+                     MC33772C_FAULT_MASK1_AN_UT_FLT_MASK_2_F(1U) |
+                     MC33772C_FAULT_MASK1_CT_OV_FLT_MASK_1_F(1U) |
+                     MC33772C_FAULT_MASK1_CT_UV_FLT_MASK_0_F(1U);
+#else
+    uint16_t value = 0xFFFF;
+#endif
+
+    status = BCC_Reg_Write(&LV_BMS::bcc_config, (bcc_cid_t)cid, MC33772C_FAULT_MASK1_OFFSET, value);
+    if(status != BCC_STATUS_SUCCESS) {
+      return status;
+    }
+
+    uint16_t readValue;
+    status = BCC_Reg_Read(&LV_BMS::bcc_config, (bcc_cid_t)cid, MC33772C_FAULT_MASK1_OFFSET, 1U, &readValue);
+    if(status != BCC_STATUS_SUCCESS) {
+      return status;
+    }
+
+    INFO("written to faultmask1: %u, read from faultmask1: %u", value, readValue);
+  }
+
+  return status;
+}
+
+static bcc_status_t Get_BCC_InfoFaults()
+{
+  bcc_status_t status = BCC_STATUS_SUCCESS;
+  uint16_t value;
+
+  for(uint8_t cid = 1; cid <= LV_BMS::bcc_config.devicesCnt; cid++) {
+    status = BCC_Reg_Read(&LV_BMS::bcc_config, (bcc_cid_t)cid, MC33772C_FAULT1_STATUS_OFFSET, 1U, &value);
+    if(status != BCC_STATUS_SUCCESS) {
+      return status;
+    }
+
+    INFO("FAULT1: %u", value);
+
+    status = BCC_Reg_Read(&LV_BMS::bcc_config, (bcc_cid_t)cid, MC33772C_FAULT2_STATUS_OFFSET, 1U, &value);
+    if(status != BCC_STATUS_SUCCESS) {
+      return status;
+    }
+
+    INFO("FAULT2: %u", value);
+
+    status = BCC_Reg_Read(&LV_BMS::bcc_config, (bcc_cid_t)cid, MC33772C_FAULT3_STATUS_OFFSET, 1U, &value);
+    if(status != BCC_STATUS_SUCCESS) {
+      return status;
+    }
+
+    INFO("FAULT3: %u", value);
+
+    status = BCC_Reg_Read(&LV_BMS::bcc_config, (bcc_cid_t)cid, MC33772C_GPIO_CFG2_OFFSET, 1U, &value);
+    if(status != BCC_STATUS_SUCCESS) {
+      return status;
+    }
+
+    INFO("GPIO_CFG2: %u", value);
+
+    status = BCC_Reg_Read(&LV_BMS::bcc_config, (bcc_cid_t)cid, MC33772C_SYS_DIAG_OFFSET, 1U, &value);
+    if(status != BCC_STATUS_SUCCESS) {
+      return status;
+    }
+
+    INFO("SYS_DIAG: %u", value);
+  }
+
+  return BCC_STATUS_SUCCESS;
+}
+
 uint64_t failCountStart = 0;
 bcc_status_t failStartStatuses[256];
 
@@ -234,28 +323,26 @@ static void Init_BCC_Driver()
   LV_BMS::bcc_config.device[0] = BCC_DEVICE_MC33772C;
   LV_BMS::bcc_config.cellCnt[0] = 6U;
 
-#if 0
-  bcc_status_t status = BCC_STATUS_COM_ECHO;
-  int countfail = -1;
-  while(status != BCC_STATUS_SUCCESS && status != BCC_STATUS_COM_NULL) {
-    __disable_irq();
-    status = BCC_Init(&LV_BMS::bcc_config);
-    __enable_irq();
-    countfail++;
-  }
-
-  if(countfail > 0) {
-    WARNING("Failed to do bcc init %d times", countfail);
-  }
-#else
-  __disable_irq();
   bcc_status_t status = BCC_Init(&LV_BMS::bcc_config);
-  __enable_irq();
   if(status != BCC_STATUS_SUCCESS && status != BCC_STATUS_COM_NULL) {
     FAULT("Could not init BCC: %s", get_bcc_error_string(status));
     return;
   }
-#endif
+
+  status = Mask_BCC_UndesiredFaults();
+  if(status != BCC_STATUS_SUCCESS) {
+    FAULT("Could not mask off undesired faults: %s",
+          get_bcc_error_string(status));
+    return;
+  }
+
+  BCC_HardwareReset(&LV_BMS::bcc_config);
+
+  status = BCC_Init(&LV_BMS::bcc_config);
+  if(status != BCC_STATUS_SUCCESS && status != BCC_STATUS_COM_NULL) {
+    FAULT("Could not init BCC: %s", get_bcc_error_string(status));
+    return;
+  }
 
   status = Init_BCC_Registers();
   if(status != BCC_STATUS_SUCCESS) {
@@ -264,12 +351,28 @@ static void Init_BCC_Driver()
     return;
   }
 
+#if 0
+  status = Enter_BCC_DiagnosticMode();
+  if(status != BCC_STATUS_SUCCESS) {
+    FAULT("Could not enter diagnostic mode: %s",
+          get_bcc_error_string(status));
+    return;
+  }
+#endif
+
+  status = Mask_BCC_UndesiredFaults();
+  if(status != BCC_STATUS_SUCCESS) {
+    FAULT("Could not mask off undesired faults: %s",
+          get_bcc_error_string(status));
+    return;
+  }
+
   status = Clear_BCC_FaultRegisters();
   if(status != BCC_STATUS_SUCCESS) {
     FAULT("Could not clear BCC fault registers: %s", 
                  get_bcc_error_string(status));
     return;
-  }
+  }  
 
   uint64_t guid;
   status = BCC_GUID_Read(&LV_BMS::bcc_config, (bcc_cid_t)1, &guid);
@@ -281,6 +384,13 @@ static void Init_BCC_Driver()
         (uint16_t)((guid >> 32) & 0x001FU),
         (uint16_t)((guid >> 16) & 0xFFFFU),
         (uint16_t)(guid & 0xFFFFU));
+  }
+
+  status = Get_BCC_InfoFaults();
+  if(status != BCC_STATUS_SUCCESS) {
+    FAULT("Could not read BCC fault registers: %s", 
+                 get_bcc_error_string(status));
+    return;
   }
 
   bcc_start_measurements();
@@ -313,18 +423,14 @@ static void bcc_get_measurements() {
     BCC_GET_COULOMB_CNT(measurements[BCC_MSR_COULOMB_CNT1],
                         measurements[BCC_MSR_COULOMB_CNT2]);
 
-#if 0
-  // NOTE: We don't use isense for LV-BMS ?????
-  int32_t isense_microvolts =
+  LV_BMS::battery[0].isense_microvolts =
     BCC_GET_ISENSE_VOLT(measurements[BCC_MSR_ISENSE1],
                         measurements[BCC_MSR_ISENSE2]);
-  int32_t isense_miliamps =
+
+  int32_t miliamps =
     BCC_GET_ISENSE_AMP(LV_BMS_RSHUNT_RESISTANCE, measurements[BCC_MSR_ISENSE1],
                        measurements[BCC_MSR_ISENSE2]);
-
-  (void)isense_microvolts;
-  (void)isense_miliamps;
-#endif
+  LV_BMS::current = (float)miliamps / 1000.0f;
 
   /* In micro volts */
   LV_BMS::battery[0].stack_voltage = (float)BCC_GET_STACK_VOLT(measurements[BCC_MSR_STACK_VOLT]) / 1'000'000.0f;
@@ -390,7 +496,10 @@ void OperationalState_OnExit(void)
 // fault
 void FaultState_OnEnter(void)
 {
-  LV_BMS::fault_led->turn_on();
+  // NOTE: This can be called at board::init()
+  if(LV_BMS::fault_led) {
+    LV_BMS::fault_led->turn_on();
+  }
 }
 
 // NOTE: This is to be implemented, there is no fault recovery yet!
@@ -448,9 +557,6 @@ void lvbms_init_comms(void)
 void LV_BMS::init() {
   lvbms_init_comms();
 
-  OrderPackets::Averaging_init(*(OrderPackets::measurement_averaging*)&LV_BMS::avg_count);
-  OrderPackets::start();
-
 #if LV_BMS_VERSION_MAJOR == 10
   Scheduler::register_task((READING_PERIOD_US / 2) - 100, []() {
     bms.update();
@@ -460,8 +566,20 @@ void LV_BMS::init() {
   Scheduler::register_task(1000'000, bcc_info_failiures);
 #endif
 
+  OrderPackets::Averaging_init(*(OrderPackets::measurement_averaging*)&LV_BMS::avg_count);
+  OrderPackets::start();
+
   //LV_BMS::add_protections();
   //DCLV::init();
+
+  bool completed = false;
+  while(!completed) {
+    bcc_status_t status = BCC_Meas_IsConverting(&LV_BMS::bcc_config, (bcc_cid_t)1, &completed);
+    (void)status;
+  }
+  bcc_get_measurements();
+  float soc = LV_BMS::ocv_battery_SOC();
+  INFO("%f", soc);
 }
 
 void LV_BMS::start() {
@@ -485,6 +603,41 @@ float LV_BMS::coulomb_counting_SOC(float current) {
   return delta_SOC;
 }
 
+template <size_t points>
+static constexpr array<float, points> calculate_OCV() {
+  float A{2.0000857323f};
+  float B{-26.585900707f};
+  float C{128.754813f};
+  float D{-271.11938173f};
+  float E{214.69606092f};
+
+  constexpr float total_capacity_ah = 4.2f;
+
+  auto delta = (LV_BMS_MAX_VOLTAGE - LV_BMS_MIN_VOLTAGE) / (points - 1);
+  array<float, points> result;
+  for (size_t i{0}; i < points; ++i) {
+    auto x = LV_BMS_MIN_VOLTAGE + i * delta;
+    auto missing_ah = (A * x * x * x * x) + (B * x * x * x) + (C * x * x) + (D * x) + E;
+    auto soc = 100.0f * (1.0f - missing_ah / total_capacity_ah);
+    soc = std::max(0.0, std::min(100.0, soc));  // clamp
+    result[i] = soc;
+  }
+
+  return result;
+}
+
+static constexpr array<float, LV_BMS_OCV_POINTS> ocv{calculate_OCV<LV_BMS_OCV_POINTS>()};
+
+static float lookup_OCV(float voltage) {
+  if (voltage <= LV_BMS_MIN_VOLTAGE) return ocv.front();
+  if (voltage >= LV_BMS_MAX_VOLTAGE) return ocv.back();
+
+  constexpr float delta = (LV_BMS_MAX_VOLTAGE - LV_BMS_MIN_VOLTAGE) / (LV_BMS_OCV_POINTS - 1);
+  size_t index = static_cast<size_t>((voltage - LV_BMS_MIN_VOLTAGE) / delta);
+
+  return ocv[index];
+}
+
 float LV_BMS::ocv_battery_SOC() {
 #if LV_BMS_VERSION_MAJOR == 10
   float total_voltage = battery[0].cells[0] + battery[0].cells[1] + battery[0].cells[2] +
@@ -494,15 +647,17 @@ float LV_BMS::ocv_battery_SOC() {
                            // the polynomial is more accurate
   float result = -62.5 + (14.9 * x) + (21.9 * x * x) + (-4.18 * x * x * x);
   return result;
-#else
-  static constexpr float max_voltage = 4.2f * 6;
-  LV_BMS::total_voltage = battery[0].cell_voltage[0] + battery[0].cell_voltage[1] + 
-                          battery[0].cell_voltage[2] + battery[0].cell_voltage[3] + 
-                          battery[0].cell_voltage[4] + battery[0].cell_voltage[5];
-  LV_BMS::avg_cell = LV_BMS::total_voltage / 6.0f;
+#elif LV_BMS_VERSION_MAJOR == 11
 
-  // very stupid initial estimation without any data, will make better this evening probably
-  float soc = (LV_BMS::total_voltage / max_voltage)*(LV_BMS::total_voltage / max_voltage) * 100.0f;
+  float cell_soc[6];
+  cell_soc[0] = lookup_OCV(battery[0].cell_voltage[0]);
+  cell_soc[1] = lookup_OCV(battery[1].cell_voltage[1]);
+  cell_soc[2] = lookup_OCV(battery[2].cell_voltage[2]);
+  cell_soc[3] = lookup_OCV(battery[3].cell_voltage[3]);
+  cell_soc[4] = lookup_OCV(battery[4].cell_voltage[4]);
+  cell_soc[5] = lookup_OCV(battery[5].cell_voltage[5]);
+  float soc = cell_soc[0] + cell_soc[1] + cell_soc[2] + cell_soc[3] + cell_soc[4] + cell_soc[5];
+
   return soc;
 #endif
 }
@@ -521,6 +676,8 @@ void LV_BMS::update_SOC() {
         FAULT("Fault: LV battery State of charge not in range [20, 80]");
         LV_BMS_SM::State_Machine.force_change_state(static_cast<size_t>(BMS_State::FAULT));
       }
+#elif LV_BMS_VERSION_MAJOR == 11
+      // TODO: Coulomb counting here!
 #endif
    /*  }
   } */
@@ -545,8 +702,12 @@ void LV_BMS::get_max_min_cells() {
   }
 #endif
 
-  max_cell = maximum;
-  min_cell = minimum;
+  LV_BMS::max_cell = maximum;
+  LV_BMS::min_cell = minimum;
+  LV_BMS::total_voltage = battery[0].cell_voltage[0] + battery[0].cell_voltage[1] + 
+                          battery[0].cell_voltage[2] + battery[0].cell_voltage[3] + 
+                          battery[0].cell_voltage[4] + battery[0].cell_voltage[5];
+  LV_BMS::avg_cell = LV_BMS::total_voltage / 6.0f;
 }
 
 #if LV_BMS_VERSION_MAJOR == 10

@@ -140,8 +140,8 @@ using lvBMS_Board = ST_LIB::Board<
 #elif LV_BMS_VERSION_MAJOR == 11
   timeout_timer_def,
 #endif
-    spi_def,
-    spi_cs_def,
-    bms_rst_def>;
+  spi_def,
+  spi_cs_def,
+  bms_rst_def>;
 
 #endif // LV_BMS_DOMAINS_HPP
