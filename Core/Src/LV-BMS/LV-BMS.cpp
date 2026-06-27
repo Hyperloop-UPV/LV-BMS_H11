@@ -141,14 +141,38 @@ static bcc_status_t Mask_BCC_UndesiredFaults()
                      MC33772C_FAULT_MASK1_CT_UV_FLT_MASK_0_F(1U);
 #else
     //uint16_t value = 0x1FFF;
-    uint16_t value = MC33772C_FAULT_MASK1_I2C_ERR_FLT_MASK_6_F(1U);
+    // uint16_t value = MC33772C_FAULT_MASK1_I2C_ERR_FLT_MASK_6_F(1U);
+
+    for(int i = 15; i >= 0; i--) {
+      if(i == 10) continue;
+      if(i == 6) continue;
+
+      status = BCC_Reg_Update(&LV_BMS::bcc_config, (bcc_cid_t)cid, MC33772C_FAULT_MASK1_OFFSET, 1 << i, 0);
+      if(status != BCC_STATUS_SUCCESS) {
+        return status;
+      }
+    }
 #endif
 
-    status = BCC_Reg_Write(&LV_BMS::bcc_config, (bcc_cid_t)cid, MC33772C_FAULT_MASK1_OFFSET, value);
+#if 0
+    value = 0;
+    status = BCC_Reg_Write(&LV_BMS::bcc_config, (bcc_cid_t)cid, MC33772C_FAULT_MASK2_OFFSET, value);
     if(status != BCC_STATUS_SUCCESS) {
       return status;
     }
+#else
+#if 0
+    uint16_t value = 1 << 6;
+    status = BCC_Reg_Write(&LV_BMS::bcc_config, (bcc_cid_t)cid, MC33772C_FAULT_MASK3_OFFSET, value);
+#else
+//     status = BCC_Reg_Update(&LV_BMS::bcc_config, (bcc_cid_t)cid, MC33772C_FAULT_MASK3_OFFSET, 0xFFFF, 0);
+#endif
+//     if(status != BCC_STATUS_SUCCESS) {
+//       return status;
+//     }
+#endif
 
+#if 0
     uint16_t readValue;
     status = BCC_Reg_Read(&LV_BMS::bcc_config, (bcc_cid_t)cid, MC33772C_FAULT_MASK1_OFFSET, 1U, &readValue);
     if(status != BCC_STATUS_SUCCESS) {
@@ -156,12 +180,13 @@ static bcc_status_t Mask_BCC_UndesiredFaults()
     }
 
     INFO("written to faultmask1: %u, read from faultmask1: %u", value, readValue);
+#endif
   }
 
   return status;
 }
 
-static bcc_status_t Get_BCC_InfoFaults()
+bcc_status_t Get_BCC_InfoFaults()
 {
   bcc_status_t status = BCC_STATUS_SUCCESS;
   uint16_t value;
@@ -204,6 +229,40 @@ static bcc_status_t Get_BCC_InfoFaults()
   }
 
   return BCC_STATUS_SUCCESS;
+}
+
+bcc_status_t Clear_BCC_FaultPin()
+{
+  bcc_status_t status;
+  uint16_t value = 0xFFFF;
+
+  status = BCC_Reg_Write(&LV_BMS::bcc_config, (bcc_cid_t)1, MC33772C_FAULT_MASK1_OFFSET, value);
+  if(status != BCC_STATUS_SUCCESS) {
+    return status;
+  }
+
+  status = BCC_Reg_Write(&LV_BMS::bcc_config, (bcc_cid_t)1, MC33772C_FAULT_MASK2_OFFSET, value);
+  if(status != BCC_STATUS_SUCCESS) {
+    return status;
+  }
+
+  status = BCC_Reg_Write(&LV_BMS::bcc_config, (bcc_cid_t)1, MC33772C_FAULT_MASK3_OFFSET, value);
+  if(status != BCC_STATUS_SUCCESS) {
+    return status;
+  }
+
+  status = Clear_BCC_FaultRegisters();
+  if(status != BCC_STATUS_SUCCESS) {
+    return status;
+  }
+
+  // NODE: Reset fault masks (not bit 6 of fault_mask1)
+  status = Mask_BCC_UndesiredFaults();
+  if(status != BCC_STATUS_SUCCESS) {
+    return status;
+  }
+
+  return status;
 }
 
 uint64_t failCountStart = 0;
@@ -339,6 +398,7 @@ static void Init_BCC_Driver()
     return;
   }
 
+#if 0
   status = Mask_BCC_UndesiredFaults();
   if(status != BCC_STATUS_SUCCESS) {
     FAULT("Could not mask off undesired faults: %s",
@@ -346,7 +406,6 @@ static void Init_BCC_Driver()
     return;
   }
 
-#if 0
   status = Enter_BCC_DiagnosticMode();
   if(status != BCC_STATUS_SUCCESS) {
     FAULT("Could not enter diagnostic mode: %s",
@@ -355,19 +414,19 @@ static void Init_BCC_Driver()
   }
 #endif
 
-  status = Mask_BCC_UndesiredFaults();
-  if(status != BCC_STATUS_SUCCESS) {
-    FAULT("Could not mask off undesired faults: %s",
-          get_bcc_error_string(status));
-    return;
-  }
-
   status = Clear_BCC_FaultRegisters();
   if(status != BCC_STATUS_SUCCESS) {
     FAULT("Could not clear BCC fault registers: %s", 
                  get_bcc_error_string(status));
     return;
-  }  
+  }
+
+  status = Clear_BCC_FaultPin();
+  if(status != BCC_STATUS_SUCCESS) {
+    FAULT("Could not clear BCC fault pin: %s",
+          get_bcc_error_string(status));
+    return;
+  }
 
   uint64_t guid;
   status = BCC_GUID_Read(&LV_BMS::bcc_config, (bcc_cid_t)1, &guid);
@@ -381,14 +440,21 @@ static void Init_BCC_Driver()
         (uint16_t)(guid & 0xFFFFU));
   }
 
+  //BCC_Reg_Update(&LV_BMS::bcc_config, (bcc_cid_t)1, MC33772C_ADC_CFG_OFFSET,
+  //               MC33772C_ADC_CFG_SOC_MASK | MC33772C_ADC_CFG_AVG_MASK,
+  //               MC33772C_ADC_CFG_SOC(MC33772C_ADC_CFG_SOC_ENABLED_ENUM_VAL) |
+  //               MC33772C_ADC_CFG_AVG(BCC_AVG_1));
+  BCC_Reg_Update(&LV_BMS::bcc_config, (bcc_cid_t)1, MC33772C_ADC_CFG_OFFSET,
+                 MC33772C_ADC_CFG_SOC_MASK, MC33772C_ADC_CFG_SOC(MC33772C_ADC_CFG_SOC_ENABLED_ENUM_VAL));
+
+  //bcc_start_measurements();
+
   status = Get_BCC_InfoFaults();
   if(status != BCC_STATUS_SUCCESS) {
     FAULT("Could not read BCC fault registers: %s", 
                  get_bcc_error_string(status));
     return;
   }
-
-  bcc_start_measurements();
 }
 
 static void bcc_get_measurements() {
