@@ -118,13 +118,13 @@ static bcc_status_t Clear_BCC_FaultRegisters()
 
 bcc_status_t Enter_BCC_DiagnosticMode()
 {
-  bcc_status_t status = BCC_Reg_Update(&LV_BMS::bcc_config, (bcc_cid_t)1, MC33772C_SYS_CFG1_OFFSET, MC33772C_SYS_CFG1_GO2DIAG_MASK, MC33772C_SYS_CFG1_GO2DIAG_EXIT_ENUM_VAL);
+  bcc_status_t status = BCC_Reg_Update(&LV_BMS::bcc_config, (bcc_cid_t)1, MC33772C_SYS_CFG1_OFFSET, MC33772C_SYS_CFG1_GO2DIAG_MASK, MC33772C_SYS_CFG1_GO2DIAG_ENTER_ENUM_VAL);
   return status;
 }
 
 bcc_status_t Exit_BCC_DiagnosticMode()
 {
-  bcc_status_t status = BCC_Reg_Update(&LV_BMS::bcc_config, (bcc_cid_t)1, MC33772C_SYS_CFG1_OFFSET, MC33772C_SYS_CFG1_GO2DIAG_MASK, MC33772C_SYS_CFG1_GO2DIAG_ENTER_ENUM_VAL);
+  bcc_status_t status = BCC_Reg_Update(&LV_BMS::bcc_config, (bcc_cid_t)1, MC33772C_SYS_CFG1_OFFSET, MC33772C_SYS_CFG1_GO2DIAG_MASK, MC33772C_SYS_CFG1_GO2DIAG_EXIT_ENUM_VAL);
   return status;
 }
 
@@ -140,7 +140,8 @@ static bcc_status_t Mask_BCC_UndesiredFaults()
                      MC33772C_FAULT_MASK1_CT_OV_FLT_MASK_1_F(1U) |
                      MC33772C_FAULT_MASK1_CT_UV_FLT_MASK_0_F(1U);
 #else
-    uint16_t value = 0x1FFF;
+    //uint16_t value = 0x1FFF;
+    uint16_t value = MC33772C_FAULT_MASK1_I2C_ERR_FLT_MASK_6_F(1U);
 #endif
 
     status = BCC_Reg_Write(&LV_BMS::bcc_config, (bcc_cid_t)cid, MC33772C_FAULT_MASK1_OFFSET, value);
@@ -323,22 +324,9 @@ static void Init_BCC_Driver()
   LV_BMS::bcc_config.device[0] = BCC_DEVICE_MC33772C;
   LV_BMS::bcc_config.cellCnt[0] = 6U;
 
-  bcc_status_t status = BCC_Init(&LV_BMS::bcc_config);
-  if(status != BCC_STATUS_SUCCESS && status != BCC_STATUS_COM_NULL) {
-    FAULT("Could not init BCC: %s", get_bcc_error_string(status));
-    return;
-  }
-
-  status = Mask_BCC_UndesiredFaults();
-  if(status != BCC_STATUS_SUCCESS) {
-    FAULT("Could not mask off undesired faults: %s",
-          get_bcc_error_string(status));
-    return;
-  }
-
   BCC_HardwareReset(&LV_BMS::bcc_config);
 
-  status = BCC_Init(&LV_BMS::bcc_config);
+  bcc_status_t status = BCC_Init(&LV_BMS::bcc_config);
   if(status != BCC_STATUS_SUCCESS && status != BCC_STATUS_COM_NULL) {
     FAULT("Could not init BCC: %s", get_bcc_error_string(status));
     return;
@@ -348,6 +336,13 @@ static void Init_BCC_Driver()
   if(status != BCC_STATUS_SUCCESS) {
     FAULT("Could not init BCC registers: %s", 
                  get_bcc_error_string(status));
+    return;
+  }
+
+  status = Mask_BCC_UndesiredFaults();
+  if(status != BCC_STATUS_SUCCESS) {
+    FAULT("Could not mask off undesired faults: %s",
+          get_bcc_error_string(status));
     return;
   }
 
