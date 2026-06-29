@@ -365,6 +365,14 @@ static void Init_BCC_Driver()
     return;
   }
 
+  status = Clear_BCC_FaultPin();
+  if(status != BCC_STATUS_SUCCESS) {
+    FAULT("Could not clear BCC fault pin: %s",
+          get_bcc_error_string(status));
+    return;
+  }
+
+  // Unmask any fault reasons that should cause fault pin to activate
   status = Mask_BCC_UndesiredFaults();
   if(status != BCC_STATUS_SUCCESS) {
     FAULT("Could not mask off undesired faults: %s", get_bcc_error_string(status));
@@ -375,13 +383,6 @@ static void Init_BCC_Driver()
   if(status != BCC_STATUS_SUCCESS) {
     FAULT("Could not clear BCC fault registers: %s", 
                  get_bcc_error_string(status));
-    return;
-  }
-
-  status = Clear_BCC_FaultPin();
-  if(status != BCC_STATUS_SUCCESS) {
-    FAULT("Could not clear BCC fault pin: %s",
-          get_bcc_error_string(status));
     return;
   }
 
@@ -401,8 +402,8 @@ static void Init_BCC_Driver()
   //               MC33772C_ADC_CFG_SOC_MASK | MC33772C_ADC_CFG_AVG_MASK,
   //               MC33772C_ADC_CFG_SOC(MC33772C_ADC_CFG_SOC_ENABLED_ENUM_VAL) |
   //               MC33772C_ADC_CFG_AVG(BCC_AVG_1));
-  BCC_Reg_Update(&LV_BMS::bcc_config, (bcc_cid_t)1, MC33772C_ADC_CFG_OFFSET,
-                 MC33772C_ADC_CFG_SOC_MASK, MC33772C_ADC_CFG_SOC(MC33772C_ADC_CFG_SOC_ENABLED_ENUM_VAL));
+  // BCC_Reg_Update(&LV_BMS::bcc_config, (bcc_cid_t)1, MC33772C_ADC_CFG_OFFSET,
+  //                MC33772C_ADC_CFG_SOC_MASK, MC33772C_ADC_CFG_SOC(MC33772C_ADC_CFG_SOC_ENABLED_ENUM_VAL));
 
   bcc_start_measurements();
 
